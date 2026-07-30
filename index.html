@@ -13,12 +13,13 @@
     .screen { display: none; flex: 1; padding: 15px; overflow-y: auto; }
     .screen.active { display: flex; flex-direction: column; }
     .card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
-    input[type="text"], input[type="email"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; text-align: left; }
+    input[type="text"], input[type="email"], select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; text-align: left; background: #fff; }
     
     button { width: 100%; padding: 12px; background: #3ecf8e; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 5px; }
     button.secondary { background: #666; }
     button.anon-btn { background: #4a5568; }
     button.premium-btn { background: linear-gradient(135deg, #f39c12, #f1c40f); color: #fff; }
+    button.nft-btn { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; }
     
     .avatar-container { position: relative; width: 90px; height: 90px; margin: 0 auto 10px auto; cursor: pointer; }
     .avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid #3ecf8e; background: #eee; }
@@ -39,11 +40,18 @@
     .back-btn { width: auto; padding: 8px 12px; margin: 0; background: #666; font-size: 13px; }
     .messages-container { flex: 1; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 8px; background: #fafafa; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
     
-    .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-break: break-word; position: relative; }
+    .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-break: break-word; position: relative; user-select: none; cursor: pointer; }
     .msg-incoming { background: #fff; border: 1px solid #eee; align-self: flex-start; border-bottom-left-radius: 2px; }
     .msg-outgoing { background: #3ecf8e; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
     .msg-info { font-size: 11px; display: flex; justify-content: flex-end; gap: 4px; margin-top: 4px; opacity: 0.8; }
     
+    .msg-reaction { position: absolute; bottom: -10px; right: 10px; background: white; border: 1px solid #ddd; border-radius: 12px; padding: 2px 6px; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+    /* Стили для NFT подарка в сообщении */
+    .nft-gift-box { background: linear-gradient(135deg, #f39c12, #d35400); color: white; padding: 10px; border-radius: 8px; margin-top: 5px; text-align: center; border: 2px dashed #f1c40f; }
+    .nft-gift-title { font-weight: bold; font-size: 15px; }
+    .nft-gift-serial { font-size: 12px; opacity: 0.9; margin-top: 2px; }
+
     .owner-badge { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; display: inline-block; vertical-align: middle; }
     .owner-text { color: #c0392b !important; font-weight: bold; }
 
@@ -74,7 +82,6 @@
       <input type="text" id="loginInput" placeholder="Введите ваш никнейм">
       <input type="email" id="emailInput" placeholder="Введите ваш Email">
       
-      <!-- Блок отправки/ввода кода -->
       <div id="codeSection" style="display: none; margin-top: 10px;">
         <p style="font-size: 13px; color: #666; margin-bottom: 5px;">Ваш проверочный код: <b id="generatedCodeDisplay" style="color: #3ecf8e; font-size: 16px;"></b></p>
         <input type="text" id="codeInput" placeholder="Введите 4-значный код">
@@ -110,9 +117,11 @@
     
     <div id="messagesList" class="messages-container" data-i18n="noMessages">Сообщений пока нет</div>
     
-    <div style="display: flex; gap: 8px;">
+    <!-- Панель ввода сообщения + кнопка подарка -->
+    <div style="display: flex; gap: 8px; align-items: center;">
       <input type="text" id="messageInput" placeholder="Введите сообщение..." style="margin:0;">
-      <button onclick="sendMessage()" style="margin:0; width: 110px;" data-i18n="sendBtn">Отправить</button>
+      <button onclick="openGiftModal()" style="margin:0; width: 45px; background: #9b59b6;" title="Отправить NFT подарок">🎁</button>
+      <button onclick="sendMessage()" style="margin:0; width: 90px;" data-i18n="sendBtn">Отправить</button>
     </div>
   </div>
 
@@ -134,7 +143,6 @@
       <div id="subscriptionCard" style="background: #fffdf0; border: 1px dashed #f1c40f; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: left;">
         <p style="margin: 0 0 8px 0; font-size: 14px; text-align: center;" id="subStatusText">Статус: Обычный</p>
         
-        <!-- Описание PRO-пакета -->
         <div id="proDescription" style="font-size: 13px; color: #555; margin-bottom: 10px; line-height: 1.4;">
           <b>Возможности PRO-аккаунта:</b><br>
           🏆 Кубок около имени<br>
@@ -144,7 +152,30 @@
         <button class="premium-btn" onclick="buySubscription()" data-i18n="buySubBtn">👑 Купить PRO Подписку</button>
       </div>
 
+      <!-- Блок создания NFT подарка -->
+      <div style="background: #f4ecf7; border: 1px dashed #9b59b6; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: left;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; text-align: center; font-weight: bold; color: #8e44ad;">💎 Создать NFT Подарок</p>
+        <select id="nftTypeSelect">
+          <option value="🧸 Мишка (NFT)">🧸 Плюшевый Мишка</option>
+          <option value="🎂 Тортик (NFT)">🎂 Праздничный Торт</option>
+          <option value="💎 Кристалл (NFT)">💎 Редкий Кристалл</option>
+          <option value="🚀 Ракета (NFT)">🚀 Крипто Ракета</option>
+        </select>
+        <button class="nft-btn" onclick="mintNftGift()">✨ Сминтить NFT подарок</button>
+      </div>
+
       <button onclick="logout()" class="secondary" data-i18n="logoutBtn">Сменить аккаунт</button>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО ВЫБОРА ПОДАРКА ДЛЯ ОТПРАВКИ -->
+  <div id="giftModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center;">
+      <h3 style="margin-top: 0; color: #8e44ad;">🎁 Отправить NFT подарок</h3>
+      <div id="myNftListContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; text-align: left;">
+        <p style="color: #666; text-align: center;">У вас нет созданных NFT подарков. Создайте их в профиле!</p>
+      </div>
+      <button class="secondary" onclick="closeGiftModal()">Отмена</button>
     </div>
   </div>
 
@@ -447,6 +478,78 @@
       }
     }
 
+    // --- ЛОГИКА NFT ПОДАРКОВ ---
+    function getMyNfts() {
+      const nfts = localStorage.getItem('chat_nfts_' + currentUser);
+      return nfts ? JSON.parse(nfts) : [];
+    }
+
+    function mintNftGift() {
+      const type = document.getElementById('nftTypeSelect').value;
+      const serialNum = Math.floor(100 + Math.random() * 900);
+      const newNft = {
+        id: 'nft_' + Date.now(),
+        name: type,
+        serial: `#${serialNum}`
+      };
+
+      const myNfts = getMyNfts();
+      myNfts.push(newNft);
+      localStorage.setItem('chat_nfts_' + currentUser, JSON.stringify(myNfts));
+      alert(`Успешно! Вы создали NFT подарок: ${newNft.name} (${newNft.serial})`);
+    }
+
+    function openGiftModal() {
+      if (!activeChatUser) return;
+      const myNfts = getMyNfts();
+      const container = document.getElementById('myNftListContainer');
+
+      if (myNfts.length === 0) {
+        container.innerHTML = `<p style="color: #666; text-align: center; font-size: 13px;">У вас нет созданных NFT подарков. Перейдите в Профиль и создайте их!</p>`;
+      } else {
+        let html = '';
+        myNfts.forEach(nft => {
+          html += `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #f9f0fc; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #d2b4de;">
+              <div>
+                <b style="font-size: 14px; color: #6c3483;">${nft.name}</b>
+                <div style="font-size: 11px; color: #7f8c8d;">${nft.serial}</div>
+              </div>
+              <button onclick="sendNftGift('${nft.id}', '${nft.name}', '${nft.serial}')" style="width: auto; padding: 6px 12px; margin: 0; background: #8e44ad; font-size: 12px;">Подарить</button>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      }
+      document.getElementById('giftModal').style.display = 'flex';
+    }
+
+    function closeGiftModal() {
+      document.getElementById('giftModal').style.display = 'none';
+    }
+
+    async function sendNftGift(nftId, nftName, nftSerial) {
+      // Удаляем подарок из инвентаря отправителя
+      let myNfts = getMyNfts();
+      myNfts = myNfts.filter(n => n.id !== nftId);
+      localStorage.setItem('chat_nfts_' + currentUser, JSON.stringify(myNfts));
+
+      closeGiftModal();
+
+      // Отправляем специальное сообщение-подарок через Supabase
+      const giftJsonString = JSON.stringify({ isNft: true, name: nftName, serial: nftSerial });
+      const { error } = await supabaseClient
+        .from('messages')
+        .insert([{ sender: currentUser, recipient: activeChatUser, text: giftJsonString, read: false, reaction: null }]);
+
+      if (error) {
+        alert("Ошибка отправки подарка: " + error.message);
+        return;
+      }
+
+      loadMessages();
+    }
+
     async function startNewChat() {
       const target = document.getElementById('targetUser').value.trim();
       const t = translations[currentLang];
@@ -550,7 +653,7 @@
 
       const { error } = await supabaseClient
         .from('messages')
-        .insert([{ sender: currentUser, recipient: activeChatUser, text: text, read: false }]);
+        .insert([{ sender: currentUser, recipient: activeChatUser, text: text, read: false, reaction: null }]);
 
       if (error) {
         alert("Ошибка отправки: " + error.message);
@@ -559,6 +662,19 @@
 
       document.getElementById('messageInput').value = '';
       loadMessages();
+    }
+
+    async function handleMessageDblClick(msgId, currentReaction) {
+      const newReaction = currentReaction === '❤️' ? null : '❤️';
+      
+      const { error } = await supabaseClient
+        .from('messages')
+        .update({ reaction: newReaction })
+        .eq('id', msgId);
+
+      if (!error) {
+        loadMessages();
+      }
     }
 
     async function markMessagesAsRead() {
@@ -605,10 +721,35 @@
           infoHtml = `<div class="msg-info"><span>${timeStr}</span></div>`;
         }
 
+        let reactionHtml = '';
+        if (msg.reaction) {
+          reactionHtml = `<div class="msg-reaction">${msg.reaction}</div>`;
+        }
+
+        // Проверяем, является ли текст сообщения NFT-подарком
+        let contentHtml = '';
+        try {
+          const parsed = JSON.parse(msg.text);
+          if (parsed && parsed.isNft) {
+            contentHtml = `
+              <div><b>@${msg.sender}</b> дарит NFT:</div>
+              <div class="nft-gift-box">
+                <div class="nft-gift-title">🎁 ${parsed.name}</div>
+                <div class="nft-gift-serial">Уникальный ID: ${parsed.serial}</div>
+              </div>
+            `;
+          } else {
+            contentHtml = `<div><b>@${msg.sender}:</b> ${msg.text}</div>`;
+          }
+        } catch (e) {
+          contentHtml = `<div><b>@${msg.sender}:</b> ${msg.text}</div>`;
+        }
+
         html += `
-          <div class="msg-bubble ${bubbleClass}">
-            <div><b>@${msg.sender}:</b> ${msg.text}</div>
+          <div class="msg-bubble ${bubbleClass}" ondblclick="handleMessageDblClick(${msg.id}, '${msg.reaction || ''}')">
+            ${contentHtml}
             ${infoHtml}
+            ${reactionHtml}
           </div>
         `;
       });
