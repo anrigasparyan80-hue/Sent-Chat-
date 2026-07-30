@@ -3,24 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>Sent Chat</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f4f6f8; display: flex; flex-direction: column; height: 100vh; }
-    
-    .header { background: #3ecf8e; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .header { background: #3ecf8e; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; }
     .screen { display: none; flex: 1; padding: 15px; overflow-y: auto; }
     .screen.active { display: block; }
     .card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
     button { width: 100%; padding: 12px; background: #3ecf8e; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 5px; }
     button.secondary { background: #666; }
-    
-    .user-card { background: #eef9f5; padding: 12px; margin-top: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
-    .user-card button { width: auto; padding: 6px 14px; margin: 0; font-size: 13px; }
-    .friend-item { background: white; padding: 12px; border-radius: 8px; margin-top: 8px; border: 1px solid #eee; display: flex; align-items: center; }
-
     .nav-bar { display: none; background: white; border-top: 1px solid #eee; }
     .nav-bar.active { display: flex; }
     .nav-btn { flex: 1; padding: 12px; text-align: center; background: none; border: none; color: #666; font-size: 14px; }
@@ -31,261 +24,63 @@
 
   <div class="header">Sent Chat</div>
 
-  <!-- АВТОРИЗАЦИЯ -->
   <div id="authScreen" class="screen active">
     <div class="card">
-      <h3 id="authTitle">Регистрация 📝</h3>
-      <input type="text" id="authUsername" placeholder="Придумайте логин">
-      <input type="password" id="authPassword" placeholder="Придумайте пароль (мин. 6 символов)">
-      <button onclick="handleAuth()" id="authBtn">Зарегистрироваться</button>
-      <button onclick="toggleAuthMode()" class="secondary" id="switchAuthBtn">Уже есть аккаунт? Войти</button>
+      <h3>Вход в чат 🔑</h3>
+      <input type="text" id="loginInput" placeholder="Введите ваш никнейм (например, Anri)">
+      <button onclick="loginUser()">Войти в приложение</button>
     </div>
   </div>
 
-  <!-- ЧАТЫ -->
   <div id="chatsScreen" class="screen">
     <div class="card">
       <h3>Сообщения 💬</h3>
-      <p style="color: #888;">Добавьте друзей во вкладке «Поиск», чтобы начать чат.</p>
+      <p id="welcomeUser">Добро пожаловать!</p>
+      <button onclick="logout()" class="secondary">Сменить ник</button>
     </div>
   </div>
 
-  <!-- ПОИСК -->
-  <div id="searchScreen" class="screen">
-    <div class="card">
-      <h3>Поиск пользователей 🔍</h3>
-      <input type="text" id="usernameInput" placeholder="Введите логин...">
-      <button onclick="searchFriend()">Найти</button>
-      <div id="results"></div>
-    </div>
-
-    <div class="card">
-      <h3>Ваши друзья 👥</h3>
-      <div id="friendsList">Загрузка...</div>
-    </div>
-  </div>
-
-  <!-- ПРОФИЛЬ -->
-  <div id="profileScreen" class="screen">
-    <div class="card">
-      <h3>Мой профиль 👤</h3>
-      <p>Ваш логин: <b id="myUsernameDisplay">@...</b></p>
-      <button onclick="logout()" class="secondary">Выйти из аккаунта</button>
-    </div>
-  </div>
-
-  <!-- НАВИГАЦИЯ -->
   <div class="nav-bar" id="mainNav">
     <button class="nav-btn active" onclick="showScreen('chatsScreen', this)">Чаты</button>
-    <button class="nav-btn" onclick="showScreen('searchScreen', this)">Поиск</button>
-    <button class="nav-btn" onclick="showScreen('profileScreen', this)">Профиль</button>
+    <button class="nav-btn" onclick="logout()">Выход</button>
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://oqfclosbphhdxhhkzzbm.supabase.co';
-    const SUPABASE_KEY = 'Sb_publishable_HpqKBPwVpp2FMU2J9LI17g_dgaQBRvr';
+    let currentUser = localStorage.getItem('chat_user') || '';
 
-    let isSignUpMode = true;
-    let currentUsername = '';
-    let accessToken = localStorage.getItem('sb_token') || '';
-
-    function toggleAuthMode() {
-      isSignUpMode = !isSignUpMode;
-      document.getElementById('authTitle').innerText = isSignUpMode ? 'Регистрация 📝' : 'Вход в аккаунт 🔑';
-      document.getElementById('authBtn').innerText = isSignUpMode ? 'Зарегистрироваться' : 'Войти';
-      document.getElementById('switchAuthBtn').innerText = isSignUpMode ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться';
+    if (currentUser) {
+      initApp(currentUser);
     }
 
-    async function handleAuth() {
-      const usernameInput = document.getElementById('authUsername').value.trim().toLowerCase();
-      const password = document.getElementById('authPassword').value.trim();
-
-      if (!usernameInput || !password) {
-        alert('Заполните логин и пароль!');
+    function loginUser() {
+      const name = document.getElementById('loginInput').value.trim();
+      if (!name) {
+        alert('Введите никнейм!');
         return;
       }
-
-      if (password.length < 6) {
-        alert('Пароль должен быть минимум 6 символов!');
-        return;
-      }
-
-      const generatedEmail = `${usernameInput}@sentchat.app`;
-      const endpoint = isSignUpMode ? '/auth/v1/signup' : '/auth/v1/token?grant_type=password';
-      
-      const requestBody = isSignUpMode 
-        ? { email: generatedEmail, password: password, data: { username: usernameInput } }
-        : { email: generatedEmail, password: password };
-
-      try {
-        const response = await fetch(SUPABASE_URL + endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'apikey': SUPABASE_KEY
-          },
-          body: JSON.stringify(requestBody)
-        });
-
-        const resData = await response.json();
-
-        if (!response.ok) {
-          const errText = resData.error_description || resData.msg || resData.message || JSON.stringify(resData);
-          if (errText.includes('already registered')) {
-            alert('Пользователь с таким логином уже существует! Нажмите "Войти"');
-          } else if (errText.includes('Invalid login credentials')) {
-            alert('Неверный логин или пароль!');
-          } else {
-            alert('Ошибка: ' + errText);
-          }
-          return;
-        }
-
-        accessToken = resData.access_token || (resData.session && resData.session.access_token);
-        if (accessToken) {
-          localStorage.setItem('sb_token', accessToken);
-        }
-
-        if (isSignUpMode) {
-          const userId = resData.user ? resData.user.id : (resData.id || '');
-          if (userId) {
-            await fetch(SUPABASE_URL + '/rest/v1/profiles', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + SUPABASE_KEY,
-                'apikey': SUPABASE_KEY,
-                'Prefer': 'return=minimal'
-              },
-              body: JSON.stringify({ id: userId, username: usernameInput })
-            });
-          }
-        }
-
-        alert(isSignUpMode ? 'Регистрация успешна!' : 'Успешный вход!');
-        initApp(usernameInput);
-
-      } catch (err) {
-        alert('Ошибка соединения: ' + err.message);
-      }
+      localStorage.setItem('chat_user', name);
+      initApp(name);
     }
 
-    function initApp(username) {
-      currentUsername = username;
-      document.getElementById('myUsernameDisplay').innerText = '@' + username;
+    function initApp(name) {
+      currentUser = name;
+      document.getElementById('welcomeUser').innerText = 'Вы вошли как: @' + name;
       document.getElementById('authScreen').classList.remove('active');
       document.getElementById('mainNav').classList.add('active');
       showScreen('chatsScreen', document.querySelector('.nav-btn'));
     }
 
     function logout() {
-      localStorage.removeItem('sb_token');
+      localStorage.removeItem('chat_user');
       location.reload();
     }
 
     function showScreen(screenId, btn) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      
       document.getElementById(screenId).classList.add('active');
       if (btn) btn.classList.add('active');
-
-      if (screenId === 'searchScreen') {
-        loadFriends();
-      }
-    }
-
-    async function searchFriend() {
-      const query = document.getElementById('usernameInput').value.trim().toLowerCase();
-      const resultsDiv = document.getElementById('results');
-      resultsDiv.innerHTML = 'Ищем...';
-
-      if (!query) {
-        resultsDiv.innerHTML = 'Введите логин!';
-        return;
-      }
-
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?username=ilike.*${query}*`, {
-          headers: { 
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'apikey': SUPABASE_KEY 
-          }
-        });
-        const data = await res.json();
-
-        if (!data || data.length === 0) {
-          resultsDiv.innerHTML = '<p style="color:#888;">Никого не найдено ❌</p>';
-          return;
-        }
-
-        resultsDiv.innerHTML = '';
-        data.forEach(user => {
-          if (user.username !== currentUsername) {
-            resultsDiv.innerHTML += `
-              <div class="user-card">
-                <span><b>@${user.username}</b></span>
-                <button onclick="addFriend('${user.username}')">Добавить</button>
-              </div>
-            `;
-          }
-        });
-      } catch (e) {
-        resultsDiv.innerHTML = 'Ошибка поиска';
-      }
-    }
-
-    async function addFriend(friendUsername) {
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/friends`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'apikey': SUPABASE_KEY,
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({ user_from: currentUsername, user_to: friendUsername, status: 'accepted' })
-        });
-
-        if (res.ok) {
-          alert(`@${friendUsername} добавлен в друзья!`);
-          loadFriends();
-        } else {
-          alert('Ошибка при добавлении');
-        }
-      } catch (e) {
-        alert('Ошибка сети');
-      }
-    }
-
-    async function loadFriends() {
-      const friendsListDiv = document.getElementById('friendsList');
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/friends?or=(user_from.eq.${currentUsername},user_to.eq.${currentUsername})`, {
-          headers: { 
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'apikey': SUPABASE_KEY 
-          }
-        });
-        const data = await res.json();
-
-        if (!data || data.length === 0) {
-          friendsListDiv.innerHTML = '<p style="color:#888;">Список друзей пуст</p>';
-          return;
-        }
-
-        friendsListDiv.innerHTML = '';
-        data.forEach(rel => {
-          const friendName = rel.user_from === currentUsername ? rel.user_to : rel.user_from;
-          friendsListDiv.innerHTML += `<div class="friend-item">🟢 &nbsp; <b>@${friendName}</b></div>`;
-        });
-      } catch (e) {
-        friendsListDiv.innerHTML = 'Ошибка загрузки друзей';
-      }
     }
   </script>
 </body>
 </html>
-      
