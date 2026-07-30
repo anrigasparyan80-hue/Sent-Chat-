@@ -21,12 +21,8 @@
 
     button { width: 100%; padding: 12px; background: #3ecf8e; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 5px; }
     button.secondary { background: #666; }
-    button.danger-btn { background: #e74c3c; }
-    button.call-btn { background: #3498db; width: auto; padding: 8px 12px; margin: 0; font-size: 13px; border-radius: 6px; }
-    button.mic-btn { background: #9b59b6; width: 45px; padding: 0; margin: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; border-radius: 8px; }
-    button.mic-btn.recording { background: #e74c3c; animation: pulse 1s infinite; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
+    button.premium-btn { background: linear-gradient(135deg, #f39c12, #f1c40f); color: #fff; }
+    
     .avatar-container { position: relative; width: 90px; height: 90px; margin: 0 auto 10px auto; cursor: pointer; }
     .avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid #3ecf8e; background: #eee; }
     .avatar-edit-overlay { position: absolute; bottom: 0; right: 0; background: #3ecf8e; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid white; }
@@ -42,28 +38,20 @@
     
     #chatRoomScreen { display: none; flex-direction: column; height: 100%; }
     #chatRoomScreen.active { display: flex; }
-    .chat-header-bar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 10px; }
-    .chat-header-left { display: flex; align-items: center; gap: 10px; }
+    .chat-header-bar { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 10px; }
     .back-btn { width: auto; padding: 8px 12px; margin: 0; background: #666; font-size: 13px; }
-    
     .messages-container { flex: 1; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 8px; background: #fafafa; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
     
     .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-break: break-word; position: relative; }
     .msg-incoming { background: #fff; border: 1px solid #eee; align-self: flex-start; border-bottom-left-radius: 2px; }
     .msg-outgoing { background: #3ecf8e; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
     .msg-info { font-size: 11px; display: flex; justify-content: flex-end; gap: 4px; margin-top: 4px; opacity: 0.8; }
-    .msg-delete { position: absolute; top: 4px; right: 6px; background: none; border: none; color: inherit; font-size: 12px; cursor: pointer; opacity: 0.6; padding: 0; width: auto; margin: 0; }
-    .msg-delete:hover { opacity: 1; }
-
+    
     .owner-badge { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; display: inline-block; vertical-align: middle; }
     .owner-text { color: #c0392b !important; font-weight: bold; }
+
     .pro-badge { background: #f1c40f; color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; display: inline-block; vertical-align: middle; }
     .pro-text { color: #d4ac0d !important; font-weight: bold; }
-
-    #callModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; color: white; }
-    .call-actions { display: flex; gap: 30px; margin-top: 40px; }
-    .call-btn-action { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    .btn-reject { background: #e74c3c; color: white; }
   </style>
 </head>
 <body>
@@ -117,19 +105,15 @@
   <!-- КОМНАТА ЧАТА -->
   <div id="chatRoomScreen" class="screen">
     <div class="chat-header-bar">
-      <div class="chat-header-left">
-        <button class="back-btn" onclick="closeChat()" data-i18n="backBtn">⬅ Назад</button>
-        <h3 style="margin:0;"><span id="chatWithTitle" style="color: #3ecf8e;">никто</span></h3>
-      </div>
-      <button class="call-btn" onclick="startAudioCall()" data-i18n="callBtn">📞 Звонок</button>
+      <button class="back-btn" onclick="closeChat()" data-i18n="backBtn">⬅ Назад</button>
+      <h3 style="margin:0;"><span id="chatWithTitle" style="color: #3ecf8e;">никто</span></h3>
     </div>
     
     <div id="messagesList" class="messages-container" data-i18n="noMessages">Сообщений пока нет</div>
     
-    <div style="display: flex; gap: 8px; align-items: center;">
-      <input type="text" id="messageInput" placeholder="Введите сообщение..." style="margin:0; flex:1;">
-      <button id="micBtn" class="mic-btn" onclick="toggleVoiceRecording()" title="Голосовое сообщение">🎤</button>
-      <button onclick="sendMessage()" style="margin:0; width: 90px;" data-i18n="sendBtn">Отпр.</button>
+    <div style="display: flex; gap: 8px;">
+      <input type="text" id="messageInput" placeholder="Введите сообщение..." style="margin:0;">
+      <button onclick="sendMessage()" style="margin:0; width: 110px;" data-i18n="sendBtn">Отправить</button>
     </div>
   </div>
 
@@ -147,16 +131,13 @@
       <p style="margin-top: 15px;"><span data-i18n="yourNick">Ваш ник</span>: <b id="welcomeUser">@...</b></p>
       <p><span data-i18n="yourPhone">Телефон</span>: <b id="welcomePhone">+...</b></p>
       
-      <button onclick="logout()" class="secondary" data-i18n="logoutBtn">Выйти из аккаунта</button>
-    </div>
-  </div>
+      <!-- Секция статуса -->
+      <div id="subscriptionCard" style="background: #fffdf0; border: 1px dashed #f1c40f; padding: 12px; border-radius: 8px; margin: 15px 0;">
+        <p style="margin: 0 0 8px 0; font-size: 14px;" id="subStatusText">Статус: Обычный</p>
+        <button class="premium-btn" onclick="buySubscription()" data-i18n="buySubBtn">👑 Купить PRO Подписку</button>
+      </div>
 
-  <!-- МОДАЛЬНОЕ ОКНО ЗВОНКА -->
-  <div id="callModal">
-    <h2 id="callStatusText" style="margin-bottom: 10px;">Аудиозвонок...</h2>
-    <p id="callTargetName" style="color: #3ecf8e; font-size: 18px; margin-bottom: 30px;">@username</p>
-    <div class="call-actions">
-      <button class="call-btn-action btn-reject" onclick="endCall()" title="Сбросить">❌</button>
+      <button onclick="logout()" class="secondary" data-i18n="logoutBtn">Выйти из аккаунта</button>
     </div>
   </div>
 
@@ -171,6 +152,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2dGhvc2hocndxc3lxaWJ4a3NsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0MTgwNjUsImV4cCI6MjEwMDk5NDA2NX0.S6cCH-Y7CfmY_WQPqwkYOMq1BOFxeQlwWWyrC398Oc8';
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const OWNER_USERNAME = 'Admin';
 
     const translations = {
@@ -180,51 +162,59 @@
         phonePlaceholder: "Номер телефона",
         authBtn: "Войти в приложение",
         chatsHeader: "Чаты 💬",
-        startChatBtn: "Начать",
+        startChatBtn: "Начать чат",
         recentChats: "Недавние диалоги",
-        noChats: "Список чатов пуст",
+        noChats: "Список чатов пуст. Начните новый диалог выше!",
         noMessages: "Сообщений пока нет",
         msgPlaceholder: "Введите сообщение...",
-        sendBtn: "Отпр.",
+        sendBtn: "Отправить",
         backBtn: "⬅ Назад",
-        callBtn: "📞 Звонок",
         profileHeader: "Профиль 👤",
         yourNick: "Ваш ник",
         yourPhone: "Телефон",
         logoutBtn: "Выйти из аккаунта",
         navChats: "Чаты",
         navProfile: "Профиль",
+        buySubBtn: "👑 Купить PRO Подписку",
+        subOwner: "Статус: 🛡️ Владелец приложения (Создатель)",
+        subActive: "Статус: 👑 PRO Подписка активна!",
+        subNormal: "Статус: Базовый (Без подписки)",
+        subSuccess: "Поздравляем! Вы успешно активировали PRO-подписку!",
         alertNoName: "Введите никнейм!",
         alertNoPhone: "Введите номер телефона!",
         alertSelf: "Нельзя писать самому себе!",
         alertNoTarget: "Введите ник собеседника!",
-        alertUserNotFound: "Такого пользователя не существует!"
+        alertUserNotFound: "Такого пользователя не существует в базе!"
       },
       en: {
         authTitle: "Chat Login 🔑",
-        authPlaceholder: "Enter nickname",
+        authPlaceholder: "Enter your nickname",
         phonePlaceholder: "Phone number",
         authBtn: "Sign In",
         chatsHeader: "Chats 💬",
-        startChatBtn: "Start",
+        startChatBtn: "Start Chat",
         recentChats: "Recent Chats",
-        noChats: "No chats yet",
+        noChats: "No chats yet. Start a new chat above!",
         noMessages: "No messages yet",
         msgPlaceholder: "Type a message...",
         sendBtn: "Send",
         backBtn: "⬅ Back",
-        callBtn: "📞 Call",
         profileHeader: "Profile 👤",
         yourNick: "Your nickname",
         yourPhone: "Phone",
         logoutBtn: "Log out",
         navChats: "Chats",
         navProfile: "Profile",
+        buySubBtn: "👑 Buy PRO Subscription",
+        subOwner: "Status: 🛡️ App Owner (Creator)",
+        subActive: "Status: 👑 PRO Subscription Active!",
+        subNormal: "Status: Basic",
+        subSuccess: "Congratulations! You activated PRO status!",
         alertNoName: "Enter a nickname!",
         alertNoPhone: "Enter a phone number!",
         alertSelf: "You cannot message yourself!",
         alertNoTarget: "Enter recipient's nickname!",
-        alertUserNotFound: "User does not exist!"
+        alertUserNotFound: "User does not exist in database!"
       }
     };
 
@@ -249,16 +239,13 @@
       document.getElementById('phoneInput').placeholder = t.phonePlaceholder;
       document.getElementById('targetUser').placeholder = "Ник собеседника...";
       document.getElementById('messageInput').placeholder = t.msgPlaceholder;
+      updateProfileUI();
     }
 
     let currentUser = localStorage.getItem('chat_user') || '';
     let currentPhone = localStorage.getItem('chat_phone') || '';
     let activeChatUser = '';
     let messageInterval = null;
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let isRecording = false;
-    let localStream = null;
 
     if (currentUser) {
       initApp(currentUser, currentPhone);
@@ -342,6 +329,42 @@
       reader.readAsDataURL(file);
     }
 
+    function buySubscription() {
+      localStorage.setItem('chat_pro_' + currentUser, 'true');
+      alert(translations[currentLang].subSuccess);
+      updateProfileUI();
+    }
+
+    function isUserPro(username) {
+      return localStorage.getItem('chat_pro_' + username) === 'true';
+    }
+
+    function updateProfileUI() {
+      const t = translations[currentLang];
+      const subTextEl = document.getElementById('subStatusText');
+      const buyBtnEl = document.querySelector('.premium-btn');
+      const subCard = document.getElementById('subscriptionCard');
+      
+      if (isOwner(currentUser)) {
+        subTextEl.innerText = t.subOwner;
+        subTextEl.style.color = "#c0392b";
+        subTextEl.style.fontWeight = "bold";
+        subCard.style.background = "#fdedec";
+        subCard.style.borderColor = "#e74c3c";
+        if(buyBtnEl) buyBtnEl.style.display = 'none';
+      } else if (isUserPro(currentUser)) {
+        subTextEl.innerText = t.subActive;
+        subTextEl.style.color = "#d4ac0d";
+        subTextEl.style.fontWeight = "bold";
+        if(buyBtnEl) buyBtnEl.style.display = 'none';
+      } else {
+        subTextEl.innerText = t.subNormal;
+        subTextEl.style.color = "#333";
+        subTextEl.style.fontWeight = "normal";
+        if(buyBtnEl) buyBtnEl.style.display = 'block';
+      }
+    }
+
     async function startNewChat() {
       const target = document.getElementById('targetUser').value.trim();
       const t = translations[currentLang];
@@ -397,6 +420,9 @@
         if (isOwner(username)) {
           nameClass = 'owner-text';
           badge = '<span class="owner-badge">ВЛАДЕЛЕЦ</span>';
+        } else if (isUserPro(username)) {
+          nameClass = 'pro-text';
+          badge = '<span class="pro-badge">PRO</span>';
         }
         
         html += `
@@ -414,6 +440,7 @@
       activeChatUser = username;
       let badge = '';
       if (isOwner(username)) badge = ' <span class="owner-badge">ВЛАДЕЛЕЦ</span>';
+      else if (isUserPro(username)) badge = ' <span class="pro-badge">PRO</span>';
 
       document.getElementById('chatWithTitle').innerHTML = '@' + username + badge;
       
@@ -435,104 +462,21 @@
       loadUserChats();
     }
 
-    async function sendMessage(customText = null, isVoice = false) {
-      const textInput = document.getElementById('messageInput');
-      const text = customText !== null ? customText : textInput.value.trim();
+    async function sendMessage() {
+      const text = document.getElementById('messageInput').value.trim();
       if (!activeChatUser || !text) return;
 
       const { error } = await supabaseClient
         .from('messages')
-        .insert([{ 
-          sender: currentUser, 
-          recipient: activeChatUser, 
-          text: text, 
-          read: false, 
-          is_voice: isVoice 
-        }]);
+        .insert([{ sender: currentUser, recipient: activeChatUser, text: text, read: false }]);
 
       if (error) {
         alert("Ошибка отправки: " + error.message);
         return;
       }
 
-      if (customText === null) textInput.value = '';
+      document.getElementById('messageInput').value = '';
       loadMessages();
-    }
-
-    async function toggleVoiceRecording() {
-      const micBtn = document.getElementById('micBtn');
-      if (!isRecording) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          audioChunks = [];
-
-          mediaRecorder.ondataavailable = event => {
-            audioChunks.push(event.data);
-          };
-
-          mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            const reader = new FileReader();
-            reader.readAsDataURL(audioBlob);
-            reader.onloadend = async function() {
-              const base64Audio = reader.result;
-              await sendMessage(base64Audio, true);
-            };
-            stream.getTracks().forEach(track => track.stop());
-          };
-
-          mediaRecorder.start();
-          isRecording = true;
-          micBtn.classList.add('recording');
-          micBtn.innerText = '⏹';
-        } catch (e) {
-          alert("Не удалось получить доступ к микрофону: " + e.message);
-        }
-      } else {
-        mediaRecorder.stop();
-        isRecording = false;
-        micBtn.classList.remove('recording');
-        micBtn.innerText = '🎤';
-      }
-    }
-
-    async function deleteMessage(msgId) {
-      if (!confirm("Удалить это сообщение?")) return;
-      const { error } = await supabaseClient
-        .from('messages')
-        .delete()
-        .eq('id', msgId);
-
-      if (error) {
-        alert("Ошибка удаления: " + error.message);
-        return;
-      }
-      loadMessages();
-    }
-
-    function startAudioCall() {
-      document.getElementById('callTargetName').innerText = '@' + activeChatUser;
-      document.getElementById('callStatusText').innerText = "Вызов...";
-      document.getElementById('callModal').style.display = 'flex';
-
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-        localStream = stream;
-        setTimeout(() => {
-          document.getElementById('callStatusText').innerText = "Соединение установлено (Аудио)";
-        }, 2000);
-      }).catch(err => {
-        alert("Ошибка микрофона для звонка: " + err.message);
-        endCall();
-      });
-    }
-
-    function endCall() {
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-        localStream = null;
-      }
-      document.getElementById('callModal').style.display = 'none';
     }
 
     async function markMessagesAsRead() {
@@ -571,13 +515,6 @@
           timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
-        let contentHtml = '';
-        if (msg.is_voice) {
-          contentHtml = `<div><b>@${msg.sender}:</b> 🎤 Голосовое сообщение</div><audio controls src="${msg.text}" style="width: 100%; margin-top: 5px; height: 35px;"></audio>`;
-        } else {
-          contentHtml = `<div><b>@${msg.sender}:</b> ${msg.text}</div>`;
-        }
-
         let infoHtml = '';
         if (isMy) {
           const checkmarks = msg.read ? '✓✓' : '✓';
@@ -586,12 +523,9 @@
           infoHtml = `<div class="msg-info"><span>${timeStr}</span></div>`;
         }
 
-        let deleteBtn = isMy ? `<button class="msg-delete" onclick="deleteMessage(${msg.id})" title="Удалить">🗑</button>` : '';
-
         html += `
           <div class="msg-bubble ${bubbleClass}">
-            ${deleteBtn}
-            ${contentHtml}
+            <div><b>@${msg.sender}:</b> ${msg.text}</div>
             ${infoHtml}
           </div>
         `;
