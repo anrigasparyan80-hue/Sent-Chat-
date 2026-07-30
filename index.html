@@ -97,9 +97,8 @@
 
     function initApp(name) {
       currentUser = name;
-      document.getElementById('welcomeUser'].innerText = '@' + name;
+      document.getElementById('welcomeUser').innerText = '@' + name;
       
-      // Загружаем сохраненную аватарку, если она есть
       const savedAvatar = localStorage.getItem('chat_avatar_' + name);
       if (savedAvatar) {
         document.getElementById('userAvatar').src = savedAvatar;
@@ -122,7 +121,6 @@
       if (btn) btn.classList.add('active');
     }
 
-    // Функция выбора и сохранения аватарки из галереи
     function changeAvatar(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -131,7 +129,6 @@
       reader.onload = function(e) {
         const base64Image = e.target.result;
         document.getElementById('userAvatar').src = base64Image;
-        // Сохраняем индивидуально для каждого пользователя в память браузера
         localStorage.setItem('chat_avatar_' + currentUser, base64Image);
       };
       reader.readAsDataURL(file);
@@ -148,7 +145,7 @@
         return;
       }
       activeChatUser = target;
-      document.getElementById('chatWithTitle'].innerText = '@' + target;
+      document.getElementById('chatWithTitle').innerText = '@' + target;
       document.getElementById('messagesList').innerHTML = 'Чат открыт. Напишите первое сообщение!';
     }
 
@@ -162,7 +159,7 @@
 
       const messagesDiv = document.getElementById('messagesList');
       messagesDiv.innerHTML += `<div><b>@${currentUser}:</b> ${text}</div>`;
-      document.getElementById('messageInput'].value = '';
+      document.getElementById('messageInput').value = '';
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
   </script>
