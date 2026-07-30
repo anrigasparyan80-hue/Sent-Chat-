@@ -130,9 +130,17 @@
       <p style="margin-top: 15px;"><span data-i18n="yourNick">Ваш ник</span>: <b id="welcomeUser">@...</b></p>
       <p><span data-i18n="yourEmail">Email</span>: <b id="welcomeEmail">...</b></p>
       
-      <!-- Секция статуса -->
-      <div id="subscriptionCard" style="background: #fffdf0; border: 1px dashed #f1c40f; padding: 12px; border-radius: 8px; margin: 15px 0;">
-        <p style="margin: 0 0 8px 0; font-size: 14px;" id="subStatusText">Статус: Обычный</p>
+      <!-- Секция статуса и описания PRO -->
+      <div id="subscriptionCard" style="background: #fffdf0; border: 1px dashed #f1c40f; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: left;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; text-align: center;" id="subStatusText">Статус: Обычный</p>
+        
+        <!-- Описание PRO-пакета -->
+        <div id="proDescription" style="font-size: 13px; color: #555; margin-bottom: 10px; line-height: 1.4;">
+          <b>Возможности PRO-аккаунта:</b><br>
+          🏆 Уникальное эмодзи около имени<br>
+          ✅ Метка о верифицированном аккаунте
+        </div>
+
         <button class="premium-btn" onclick="buySubscription()" data-i18n="buySubBtn">👑 Купить PRO Подписку</button>
       </div>
 
@@ -156,7 +164,6 @@
             }
         }, 1800);
 
-        // Проверка таймера анонимного входа при перезагрузке
         if (localStorage.getItem('chat_is_anon') === 'true') {
             const loginTime = parseInt(localStorage.getItem('chat_anon_time') || '0', 10);
             const elapsed = Date.now() - loginTime;
@@ -197,7 +204,7 @@
         navChats: "Чаты",
         navProfile: "Профиль",
         buySubBtn: "👑 Купить PRO Подписку",
-        subOwner: "Статус: 🛡️ Владелец приложения (Создатель)",
+        subOwner: "Статус: 👑🛡️ Владелец приложения (Создатель)",
         subActive: "Статус: 👑 PRO Подписка активна!",
         subNormal: "Статус: Базовый (Без подписки)",
         subSuccess: "Поздравляем! Вы успешно активировали PRO-подписку!",
@@ -230,7 +237,7 @@
         navChats: "Chats",
         navProfile: "Profile",
         buySubBtn: "👑 Buy PRO Subscription",
-        subOwner: "Status: 🛡️ App Owner (Creator)",
+        subOwner: "Status: 👑🛡️ App Owner (Creator)",
         subActive: "Status: 👑 PRO Subscription Active!",
         subNormal: "Status: Basic",
         subSuccess: "Congratulations! You activated PRO status!",
@@ -415,6 +422,7 @@
       const subTextEl = document.getElementById('subStatusText');
       const buyBtnEl = document.querySelector('.premium-btn');
       const subCard = document.getElementById('subscriptionCard');
+      const proDescEl = document.getElementById('proDescription');
       
       if (isOwner(currentUser)) {
         subTextEl.innerText = t.subOwner;
@@ -422,16 +430,19 @@
         subTextEl.style.fontWeight = "bold";
         subCard.style.background = "#fdedec";
         subCard.style.borderColor = "#e74c3c";
+        if(proDescEl) proDescEl.style.display = 'none';
         if(buyBtnEl) buyBtnEl.style.display = 'none';
       } else if (isUserPro(currentUser)) {
         subTextEl.innerText = t.subActive;
         subTextEl.style.color = "#d4ac0d";
         subTextEl.style.fontWeight = "bold";
+        if(proDescEl) proDescEl.style.display = 'none';
         if(buyBtnEl) buyBtnEl.style.display = 'none';
       } else {
         subTextEl.innerText = t.subNormal;
         subTextEl.style.color = "#333";
         subTextEl.style.fontWeight = "normal";
+        if(proDescEl) proDescEl.style.display = 'block';
         if(buyBtnEl) buyBtnEl.style.display = 'block';
       }
     }
@@ -490,10 +501,10 @@
 
         if (isOwner(username)) {
           nameClass = 'owner-text';
-          badge = '<span class="owner-badge">ВЛАДЕЛЕЦ</span>';
+          badge = '<span class="owner-badge">👑 ВЛАДЕЛЕЦ</span>';
         } else if (isUserPro(username)) {
           nameClass = 'pro-text';
-          badge = '<span class="pro-badge">PRO</span>';
+          badge = '<span class="pro-badge">🏆 PRO ✅</span>';
         }
         
         html += `
@@ -510,8 +521,8 @@
     async function openChatRoom(username) {
       activeChatUser = username;
       let badge = '';
-      if (isOwner(username)) badge = ' <span class="owner-badge">ВЛАДЕЛЕЦ</span>';
-      else if (isUserPro(username)) badge = ' <span class="pro-badge">PRO</span>';
+      if (isOwner(username)) badge = ' <span class="owner-badge">👑 ВЛАДЕЛЕЦ</span>';
+      else if (isUserPro(username)) badge = ' <span class="pro-badge">🏆 PRO ✅</span>';
 
       document.getElementById('chatWithTitle').innerHTML = '@' + username + badge;
       
