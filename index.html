@@ -597,113 +597,98 @@ window.addEventListener('load', () => {
 
     updateTexts();
   </script>
-</body>
-</html>
-<!-- Карточка профиля -->
-<div id="user-profile-card" class="profile-card" style="display: none;">
-    <h3>Профиль Sent Chat</h3>
-    <div class="profile-field">
-        <label>Юзернейм:</label>
-        <input type="text" id="username-input" placeholder="@username">
-    </div>
-    <div class="profile-field">
-        <label>Дата рождения:</label>
-        <input type="date" id="birthdate-input">
-    </div>
-    <button id="save-profile-btn">Сохранить</button>
-</div>
 
 <style>
-.profile-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    padding: 15px;
-    border-radius: 12px;
-    max-width: 300px;
-    margin: 15px auto;
-    font-family: sans-serif;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+.fab-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    background: #10b981;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    cursor: pointer;
+    border: none;
+    z-index: 1000;
 }
-.profile-card h3 {
-    margin-top: 0;
-    font-size: 16px;
-    color: #1a365d;
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    font-family: sans-serif;
+}
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    width: 85%;
+    max-width: 300px;
     text-align: center;
 }
-.profile-field {
-    margin-bottom: 10px;
-}
-.profile-field label {
-    display: block;
-    font-size: 12px;
-    color: #64748b;
-    margin-bottom: 4px;
-}
-.profile-field input {
+.modal-btn {
     width: 100%;
-    padding: 8px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    box-sizing: border-box;
-}
-#save-profile-btn {
-    width: 100%;
-    background: #1a365d;
-    color: white;
+    padding: 12px;
+    margin: 8px 0;
     border: none;
-    padding: 8px;
-    border-radius: 6px;
-    cursor: pointer;
+    border-radius: 10px;
+    font-size: 15px;
     font-weight: bold;
+    cursor: pointer;
 }
-#save-profile-btn:hover {
-    background: #2563eb;
-}
+.btn-chat { background: #f1f5f9; color: #334155; }
+.btn-group { background: #10b981; color: white; }
+.modal-close { background: transparent; color: #64748b; border: none; margin-top: 10px; cursor: pointer; }
 </style>
+
+<button id="fab-menu-btn" class="fab-btn">+</button>
+
+<div id="action-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 style="margin-top:0;">Новое действие</h3>
+        <button id="create-chat-option" class="modal-btn btn-chat">Личный чат</button>
+        <button id="create-group-option" class="modal-btn btn-group">Создать группу</button>
+        <br>
+        <button id="close-modal-btn" class="modal-close">Отмена</button>
+    </div>
+</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const usernameInput = document.getElementById("username-input");
-    const birthdateInput = document.getElementById("birthdate-input");
-    const saveBtn = document.getElementById("save-profile-btn");
-    const profileCard = document.getElementById("user-profile-card");
+    const fabBtn = document.getElementById("fab-menu-btn");
+    const modal = document.getElementById("action-modal");
+    const closeModalBtn = document.getElementById("close-modal-btn");
+    const chatBtn = document.getElementById("create-chat-option");
+    const groupBtn = document.getElementById("create-group-option");
 
-    // Загружаем сохраненные данные
-    if (localStorage.getItem("sent_chat_username")) {
-        usernameInput.value = localStorage.getItem("sent_chat_username");
-    }
-    if (localStorage.getItem("sent_chat_birthdate")) {
-        birthdateInput.value = localStorage.getItem("sent_chat_birthdate");
-    }
+    fabBtn.addEventListener("click", () => modal.style.display = "flex");
+    closeModalBtn.addEventListener("click", () => modal.style.display = "none");
+    modal.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
 
-    // Сохранение данных
-    saveBtn.addEventListener("click", () => {
-        localStorage.setItem("sent_chat_username", usernameInput.value);
-        localStorage.setItem("sent_chat_birthdate", birthdateInput.value);
-        alert("Профиль успешно сохранен!");
+    chatBtn.addEventListener("click", () => {
+        modal.style.display = "none";
+        alert("Скоро: создание личного чата");
     });
 
-    // Находим кнопки переключения "Чаты" и "Профиль" по тексту
-    const allElements = document.querySelectorAll("div, span, button, a");
-    allElements.forEach(el => {
-        // Проверяем текст кнопки (без лишних дочерних элементов)
-        if (el.children.length === 0) {
-            const text = el.textContent.trim();
-            
-            if (text === "Профиль") {
-                el.style.cursor = "pointer";
-                el.addEventListener("click", () => {
-                    profileCard.style.display = "block"; // Показываем профиль
-                });
-            }
-            if (text === "Чаты") {
-                el.style.cursor = "pointer";
-                el.addEventListener("click", () => {
-                    profileCard.style.display = "none"; // Скрываем профиль
-                });
-            }
+    groupBtn.addEventListener("click", () => {
+        modal.style.display = "none";
+        let groupName = prompt("Введите название новой группы:");
+        if (groupName) {
+            alert(`Группа "${groupName}" успешно создана!`);
         }
     });
 });
 </script>
+
+</body>
+</html>
  
