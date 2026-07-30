@@ -31,13 +31,12 @@
 
   <div class="header">Sent Chat</div>
 
-  <!-- АВТОРИЗАЦИЯ -->
+  <!-- АВТОРИЗАЦИЯ БЕЗ EMAIL -->
   <div id="authScreen" class="screen active">
     <div class="card">
       <h3 id="authTitle">Регистрация 📝</h3>
-      <input type="text" id="regUsername" placeholder="Ваш логин (например: Alex7577)">
-      <input type="email" id="authEmail" placeholder="Email">
-      <input type="password" id="authPassword" placeholder="Пароль">
+      <input type="text" id="authUsername" placeholder="Придумайте логин">
+      <input type="password" id="authPassword" placeholder="Придумайте пароль (мин. 6 символов)">
       <button onclick="handleAuth()" id="authBtn">Зарегистрироваться</button>
       <button onclick="toggleAuthMode()" class="secondary" id="switchAuthBtn">Уже есть аккаунт? Войти</button>
     </div>
@@ -95,20 +94,24 @@
       document.getElementById('authTitle').innerText = isSignUpMode ? 'Регистрация 📝' : 'Вход в аккаунт 🔑';
       document.getElementById('authBtn').innerText = isSignUpMode ? 'Зарегистрироваться' : 'Войти';
       document.getElementById('switchAuthBtn').innerText = isSignUpMode ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться';
-      document.getElementById('regUsername').style.display = isSignUpMode ? 'block' : 'none';
     }
 
-    // Прямой API запрос к Supabase Auth
     async function handleAuth() {
-      const email = document.getElementById('authEmail').value.trim();
+      const usernameInput = document.getElementById('authUsername').value.trim().toLowerCase();
       const password = document.getElementById('authPassword').value.trim();
-      const username = document.getElementById('regUsername').value.trim();
 
-      if (!email || !password || (isSignUpMode && !username)) {
-        alert('Заполните все поля!');
+      if (!usernameInput || !password) {
+        alert('Заполните логин и пароль!');
         return;
       }
 
+      if (password.length < 6) {
+        alert('Пароль должен быть минимум 6 символов!');
+        return;
+      }
+
+      // Генерируем технический email из логина
+      const generatedEmail = `${usernameInput}@sentchat.app`;
       const endpoint = isSignUpMode ? '/auth/v1/signup' : '/auth/v1/token?grant_type=password';
       
       try {
@@ -118,13 +121,20 @@
             'Content-Type': 'application/json',
             'apikey': SUPABASE_KEY
           },
-          body: JSON.stringify({ email, password, data: { username } })
+          body: JSON.stringify({ email: generatedEmail, password, data: { username: usernameInput } })
         });
 
         const resData = await response.json();
 
         if (!response.ok) {
-          alert('Ошибка: ' + (resData.error_description || resData.msg || resData.message));
+          const errText = resData.error_description || resData.msg || resData.message || '';
+          if (errText.includes('already registered')) {
+            alert('Пользователь с таким логином уже существует! Нажмите "Войти"');
+          } else if (errText.includes('Invalid login credentials')) {
+            alert('Неверный логин или пароль!');
+          } else {
+            alert('Ошибка: ' + errText);
+          }
           return;
         }
 
@@ -133,9 +143,7 @@
           localStorage.setItem('sb_token', accessToken);
         }
 
-        const userUsername = username || (resData.user && resData.user.user_metadata ? resData.user.user_metadata.username : email.split('@')[0]);
-        
-        // Создаем профиль
+        // Сохраняем профиль
         if (isSignUpMode && resData.user) {
           await fetch(SUPABASE_URL + '/rest/v1/profiles', {
             method: 'POST',
@@ -145,15 +153,15 @@
               'Authorization': 'Bearer ' + (accessToken || SUPABASE_KEY),
               'Prefer': 'return=minimal'
             },
-            body: JSON.stringify({ id: resData.user.id, username: userUsername })
+            body: JSON.stringify({ id: resData.user.id, username: usernameInput })
           });
         }
 
         alert(isSignUpMode ? 'Регистрация успешна!' : 'Успешный вход!');
-        initApp(userUsername);
+        initApp(usernameInput);
 
       } catch (err) {
-        alert('Ошибка сети: ' + err.message);
+        alert('Ошибка соединения: ' + err.message);
       }
     }
 
@@ -183,7 +191,7 @@
     }
 
     async function searchFriend() {
-      const query = document.getElementById('usernameInput').value.trim();
+      const query = document.getElementById('usernameInput').value.trim().toLowerCase();
       const resultsDiv = document.getElementById('results');
       resultsDiv.innerHTML = 'Ищем...';
 
@@ -268,4 +276,3 @@
   </script>
 </body>
 </html>
-     
