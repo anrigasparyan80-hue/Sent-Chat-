@@ -5,35 +5,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sent Chat</title>
-  <!-- Подключаем библиотеку Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f8; display: flex; flex-direction: column; height: 100vh; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f4f6f8; display: flex; flex-direction: column; height: 100vh; }
     
-    /* Шапка */
     .header { background: #3ecf8e; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    
-    /* Контентные экраны */
     .screen { display: none; flex: 1; padding: 15px; overflow-y: auto; }
     .screen.active { display: block; }
-    
-    /* Карточки и элементы */
     .card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
     button { width: 100%; padding: 12px; background: #3ecf8e; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 5px; }
     button.secondary { background: #666; }
-    button:active { opacity: 0.8; }
     
-    /* Списки и результаты */
     .user-card { background: #eef9f5; padding: 12px; margin-top: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
     .user-card button { width: auto; padding: 6px 14px; margin: 0; font-size: 13px; }
     .friend-item { background: white; padding: 12px; border-radius: 8px; margin-top: 8px; border: 1px solid #eee; display: flex; align-items: center; }
 
-    /* Нижняя навигация */
     .nav-bar { display: none; background: white; border-top: 1px solid #eee; }
     .nav-bar.active { display: flex; }
-    .nav-btn { flex: 1; padding: 12px; text-align: center; background: none; border: none; color: #666; font-size: 14px; font-weight: normal; border-radius: 0; }
+    .nav-btn { flex: 1; padding: 12px; text-align: center; background: none; border: none; color: #666; font-size: 14px; }
     .nav-btn.active { color: #3ecf8e; font-weight: bold; }
   </style>
 </head>
@@ -41,42 +32,42 @@
 
   <div class="header">Sent Chat</div>
 
-  <!-- ЭКРАН 0: Авторизация / Регистрация -->
+  <!-- ВХОД / РЕГИСТРАЦИЯ -->
   <div id="authScreen" class="screen active">
     <div class="card">
       <h3 id="authTitle">Регистрация 📝</h3>
-      <input type="text" id="regUsername" placeholder="Ваш уникальный логин (например: alex)">
+      <input type="text" id="regUsername" placeholder="Логин (например: Alex7577)">
       <input type="email" id="authEmail" placeholder="Email">
-      <input type="password" id="authPassword" placeholder="Пароль">
+      <input type="password" id="authPassword" placeholder="Пароль (мин. 6 символов)">
       <button onclick="handleAuth()" id="authBtn">Зарегистрироваться</button>
       <button onclick="toggleAuthMode()" class="secondary" id="switchAuthBtn">Уже есть аккаунт? Войти</button>
     </div>
   </div>
 
-  <!-- ЭКРАН 1: Чаты -->
+  <!-- ЧАТЫ -->
   <div id="chatsScreen" class="screen">
     <div class="card">
       <h3>Сообщения 💬</h3>
-      <p style="color: #888;">Выберите друга из списка во вкладке «Поиск», чтобы начать чат.</p>
+      <p style="color: #888;">Найдите друзей во вкладке «Поиск», чтобы общаться.</p>
     </div>
   </div>
 
-  <!-- ЭКРАН 2: Поиск и Добавление друзей -->
+  <!-- ПОИСК И ДРУЗЬЯ -->
   <div id="searchScreen" class="screen">
     <div class="card">
       <h3>Поиск пользователей 🔍</h3>
-      <input type="text" id="usernameInput" placeholder="Введите логин пользователя...">
+      <input type="text" id="usernameInput" placeholder="Введите логин...">
       <button onclick="searchFriend()">Найти</button>
       <div id="results"></div>
     </div>
 
     <div class="card">
       <h3>Ваши друзья 👥</h3>
-      <div id="friendsList">Загрузка списка...</div>
+      <div id="friendsList">Загрузка...</div>
     </div>
   </div>
 
-  <!-- ЭКРАН 3: Профиль -->
+  <!-- ПРОФИЛЬ -->
   <div id="profileScreen" class="screen">
     <div class="card">
       <h3>Мой профиль 👤</h3>
@@ -85,7 +76,7 @@
     </div>
   </div>
 
-  <!-- НИЖНЕЕ МЕНЮ -->
+  <!-- НАВИГАЦИЯ -->
   <div class="nav-bar" id="mainNav">
     <button class="nav-btn active" onclick="showScreen('chatsScreen', this)">Чаты</button>
     <button class="nav-btn" onclick="showScreen('searchScreen', this)">Поиск</button>
@@ -93,17 +84,17 @@
   </div>
 
   <script>
-    // 1. НАСТРОЙКИ SUPABASE (Правильный anon ключ)
     const SUPABASE_URL = 'https://oqfclosbphhdxhhkzzbm.supabase.co';
     const SUPABASE_KEY = 'EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xZmNsb3NicGhoZHhoaGt6emJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzOTYyODQsImV4cCI6MjEwMDk3MjI4NH0.uEltk9n5UBYvrXTrBLj9rvG1_yDPNMsQjaTiPq9mlNA';
     
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Инициализация с явной передачей параметров
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true }
+    });
 
     let isSignUpMode = true;
-    let currentUser = null;
     let currentUsername = '';
 
-    // Переключение между Регистрацией и Входом
     function toggleAuthMode() {
       isSignUpMode = !isSignUpMode;
       document.getElementById('authTitle').innerText = isSignUpMode ? 'Регистрация 📝' : 'Вход в аккаунт 🔑';
@@ -112,7 +103,6 @@
       document.getElementById('regUsername').style.display = isSignUpMode ? 'block' : 'none';
     }
 
-    // Обработка Входа / Регистрации
     async function handleAuth() {
       const email = document.getElementById('authEmail').value.trim();
       const password = document.getElementById('authPassword').value.trim();
@@ -124,46 +114,48 @@
       }
 
       if (isSignUpMode) {
-        // Регистрация
-        const { data, error } = await supabaseClient.auth.signUp({ email, password });
-        if (error) { alert('Ошибка регистрации: ' + error.message); return; }
+        const { data, error } = await supabaseClient.auth.signUp({ 
+          email, 
+          password,
+          options: { data: { username: username } }
+        });
+        
+        if (error) { 
+          alert('Ошибка регистрации: ' + error.message); 
+          return; 
+        }
 
-        // Сохраняем логин в таблицу profiles
         if (data.user) {
-          await supabaseClient.from('profiles').insert([{ id: data.user.id, username: username }]);
-          alert('Регистрация успешна!');
+          await supabaseClient.from('profiles').upsert([{ id: data.user.id, username: username }]);
+          alert('Регистрация прошла успешно!');
           initApp(data.user, username);
         }
       } else {
-        // Вход
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) { alert('Ошибка входа: ' + error.message); return; }
+        if (error) { 
+          alert('Ошибка входа: ' + error.message); 
+          return; 
+        }
 
-        // Получаем логин из профилей
-        const { data: profile } = await supabaseClient.from('profiles').select('username').eq('id', data.user.id).single();
-        const userUsername = profile ? profile.username : email.split('@')[0];
+        const { data: profile } = await supabaseClient.from('profiles').select('username').eq('id', data.user.id).maybeSingle();
+        const userUsername = profile ? profile.username : (data.user.user_metadata.username || email.split('@')[0]);
         initApp(data.user, userUsername);
       }
     }
 
-    // Инициализация интерфейса после входа
     function initApp(user, username) {
-      currentUser = user;
       currentUsername = username;
       document.getElementById('myUsernameDisplay').innerText = '@' + username;
-      
       document.getElementById('authScreen').classList.remove('active');
       document.getElementById('mainNav').classList.add('active');
       showScreen('chatsScreen', document.querySelector('.nav-btn'));
     }
 
-    // Выход из аккаунта
     async function logout() {
       await supabaseClient.auth.signOut();
       location.reload();
     }
 
-    // Переключение экранов
     function showScreen(screenId, btn) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -176,14 +168,13 @@
       }
     }
 
-    // ПОИСК ДРУЗЕЙ
     async function searchFriend() {
       const query = document.getElementById('usernameInput').value.trim();
       const resultsDiv = document.getElementById('results');
       resultsDiv.innerHTML = 'Ищем...';
 
       if (!query) {
-        resultsDiv.innerHTML = 'Введите имя для поиска!';
+        resultsDiv.innerHTML = 'Введите логин!';
         return;
       }
 
@@ -193,7 +184,7 @@
         .ilike('username', `%${query}%`);
 
       if (error || !data || data.length === 0) {
-        resultsDiv.innerHTML = '<p style="color:#888;">Пользователь не найден ❌</p>';
+        resultsDiv.innerHTML = '<p style="color:#888;">Никого не найдено ❌</p>';
         return;
       }
 
@@ -210,33 +201,28 @@
       });
     }
 
-    // ДОБАВЛЕНИЕ В ДРУЗЬЯ
     async function addFriend(friendUsername) {
       const { error } = await supabaseClient
         .from('friends')
-        .insert([
-          { user_from: currentUsername, user_to: friendUsername, status: 'accepted' }
-        ]);
+        .insert([{ user_from: currentUsername, user_to: friendUsername, status: 'accepted' }]);
 
       if (error) {
-        alert('Ошибка при добавлении: ' + error.message);
+        alert('Ошибка добавления: ' + error.message);
       } else {
-        alert(`Пользователь @${friendUsername} добавлен в друзья!`);
+        alert(`@${friendUsername} добавлен в друзья!`);
         loadFriends();
       }
     }
 
-    // ЗАГРУЗКА СПИСКА ДРУЗЕЙ
     async function loadFriends() {
       const friendsListDiv = document.getElementById('friendsList');
-
       const { data, error } = await supabaseClient
         .from('friends')
         .select('*')
         .or(`user_from.eq.${currentUsername},user_to.eq.${currentUsername}`);
 
       if (error || !data || data.length === 0) {
-        friendsListDiv.innerHTML = '<p style="color:#888;">У вас пока нет друзей</p>';
+        friendsListDiv.innerHTML = '<p style="color:#888;">Список друзей пуст</p>';
         return;
       }
 
@@ -244,19 +230,16 @@
       data.forEach(rel => {
         const friendName = rel.user_from === currentUsername ? rel.user_to : rel.user_from;
         friendsListDiv.innerHTML += `
-          <div class="friend-item">
-            🟢 &nbsp; <b>@${friendName}</b>
-          </div>
+          <div class="friend-item">🟢 &nbsp; <b>@${friendName}</b></div>
         `;
       });
     }
 
-    // Проверка текущей сессии
     async function checkSession() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
-        const { data: profile } = await supabaseClient.from('profiles').select('username').eq('id', session.user.id).single();
-        const userUsername = profile ? profile.username : session.user.email.split('@')[0];
+        const { data: profile } = await supabaseClient.from('profiles').select('username').eq('id', session.user.id).maybeSingle();
+        const userUsername = profile ? profile.username : (session.user.user_metadata.username || session.user.email.split('@')[0]);
         initApp(session.user, userUsername);
       }
     }
