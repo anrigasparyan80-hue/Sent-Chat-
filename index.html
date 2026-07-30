@@ -14,6 +14,7 @@
     input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
     button { width: 100%; padding: 12px; background: #3ecf8e; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 5px; }
     button.secondary { background: #666; }
+    .chat-item { background: white; padding: 12px; border-radius: 8px; margin-top: 8px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
     .nav-bar { display: none; background: white; border-top: 1px solid #eee; }
     .nav-bar.active { display: flex; }
     .nav-btn { flex: 1; padding: 12px; text-align: center; background: none; border: none; color: #666; font-size: 14px; }
@@ -24,29 +25,48 @@
 
   <div class="header">Sent Chat</div>
 
+  <!-- ВХОД -->
   <div id="authScreen" class="screen active">
     <div class="card">
       <h3>Вход в чат 🔑</h3>
-      <input type="text" id="loginInput" placeholder="Введите ваш никнейм (например, Anri)">
+      <input type="text" id="loginInput" placeholder="Введите ваш никнейм">
       <button onclick="loginUser()">Войти в приложение</button>
     </div>
   </div>
 
+  <!-- ЧАТЫ -->
   <div id="chatsScreen" class="screen">
     <div class="card">
-      <h3>Сообщения 💬</h3>
-      <p id="welcomeUser">Добро пожаловать!</p>
-      <button onclick="logout()" class="secondary">Сменить ник</button>
+      <h3>Чаты 💬</h3>
+      <input type="text" id="targetUser" placeholder="С кем хотите начать чат (ник)?">
+      <button onclick="openChat()">Открыть чат</button>
+    </div>
+    <div class="card">
+      <h3>Активный чат с: <span id="chatWithTitle" style="color: #3ecf8e;">никто</span></h3>
+      <div id="messagesList" style="height: 150px; overflow-y: auto; border: 1px solid #eee; padding: 8px; margin-bottom: 8px; border-radius: 8px; background: #fafafa;">Сообщений пока нет</div>
+      <input type="text" id="messageInput" placeholder="Введите сообщение...">
+      <button onclick="sendMessage()">Отправить</button>
     </div>
   </div>
 
+  <!-- ПРОФИЛЬ -->
+  <div id="profileScreen" class="screen">
+    <div class="card">
+      <h3>Профиль 👤</h3>
+      <p>Ваш ник: <b id="welcomeUser">@...</b></p>
+      <button onclick="logout()" class="secondary">Выйти из аккаунта</button>
+    </div>
+  </div>
+
+  <!-- НАВИГАЦИЯ -->
   <div class="nav-bar" id="mainNav">
     <button class="nav-btn active" onclick="showScreen('chatsScreen', this)">Чаты</button>
-    <button class="nav-btn" onclick="logout()">Выход</button>
+    <button class="nav-btn" onclick="showScreen('profileScreen', this)">Профиль</button>
   </div>
 
   <script>
     let currentUser = localStorage.getItem('chat_user') || '';
+    let activeChatUser = '';
 
     if (currentUser) {
       initApp(currentUser);
@@ -64,7 +84,7 @@
 
     function initApp(name) {
       currentUser = name;
-      document.getElementById('welcomeUser').innerText = 'Вы вошли как: @' + name;
+      document.getElementById('welcomeUser').innerText = '@' + name;
       document.getElementById('authScreen').classList.remove('active');
       document.getElementById('mainNav').classList.add('active');
       showScreen('chatsScreen', document.querySelector('.nav-btn'));
@@ -80,6 +100,35 @@
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
       if (btn) btn.classList.add('active');
+    }
+
+    function openChat() {
+      const target = document.getElementById('targetUser').value.trim();
+      if (!target) {
+        alert('Введите ник собеседника!');
+        return;
+      }
+      if (target === currentUser) {
+        alert('Нельзя писать самому себе!');
+        return;
+      }
+      activeChatUser = target;
+      document.getElementById('chatWithTitle').innerText = '@' + target;
+      document.getElementById('messagesList').innerHTML = 'Чат открыт. Напишите первое сообщение!';
+    }
+
+    function sendMessage() {
+      const text = document.getElementById('messageInput').value.trim();
+      if (!activeChatUser) {
+        alert('Сначала выберите собеседника сверху!');
+        return;
+      }
+      if (!text) return;
+
+      const messagesDiv = document.getElementById('messagesList');
+      messagesDiv.innerHTML += `<div><b>@${currentUser}:</b> ${text}</div>`;
+      document.getElementById('messageInput').value = '';
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
   </script>
 </body>
