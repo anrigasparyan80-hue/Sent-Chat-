@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -65,7 +64,6 @@
     </select>
   </div>
 
-  <!-- ВХОД -->
   <div id="authScreen" class="screen active">
     <div class="card">
       <h3 data-i18n="authTitle">Вход в чат 🔑</h3>
@@ -87,7 +85,6 @@
     </div>
   </div>
 
-  <!-- СПИСОК ЧАТОВ -->
   <div id="chatsScreen" class="screen">
     <div class="card" style="text-align: left; margin-bottom: 10px;">
       <h3 data-i18n="chatsHeader" style="margin-top:0;">Чаты 💬</h3>
@@ -103,7 +100,6 @@
     </div>
   </div>
 
-  <!-- КОМНАТА ЧАТА -->
   <div id="chatRoomScreen" class="screen">
     <div class="chat-header-bar">
       <button class="back-btn" onclick="closeChat()" data-i18n="backBtn">⬅ Назад</button>
@@ -118,7 +114,6 @@
     </div>
   </div>
 
-  <!-- ПРОФИЛЬ -->
   <div id="profileScreen" class="screen">
     <div class="card">
       <h3 data-i18n="profileHeader">Профиль 👤</h3>
@@ -132,7 +127,6 @@
       <p style="margin-top: 15px;"><span data-i18n="yourNick">Ваш ник</span>: <b id="welcomeUser">@...</b></p>
       <p><span data-i18n="yourPhone">Телефон</span>: <b id="welcomePhone">+...</b></p>
       
-      <!-- Секция статуса -->
       <div id="subscriptionCard" style="background: #fffdf0; border: 1px dashed #f1c40f; padding: 12px; border-radius: 8px; margin: 15px 0;">
         <p style="margin: 0 0 8px 0; font-size: 14px;" id="subStatusText">Статус: Обычный</p>
         <button class="premium-btn" onclick="buySubscription()" data-i18n="buySubBtn">👑 Купить PRO Подписку</button>
@@ -142,7 +136,6 @@
     </div>
   </div>
 
-  <!-- НАВИГАЦИЯ -->
   <div class="nav-bar" id="mainNav">
     <button class="nav-btn active" id="navChatsBtn" onclick="switchMainTab('chatsScreen', this)" data-i18n="navChats">Чаты</button>
     <button class="nav-btn" id="navProfileBtn" onclick="switchMainTab('profileScreen', this)" data-i18n="navProfile">Профиль</button>
@@ -513,31 +506,5 @@
         let timeStr = "";
         if (msg.created_at) {
           const date = new Date(msg.created_at);
-          timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
-        let infoHtml = '';
-        if (isMy) {
-          const checkmarks = msg.read ? '✓✓' : '✓';
-          infoHtml = `<div class="msg-info"><span>${timeStr}</span> <span style="font-weight: bold; color: ${msg.read ? '#fff' : 'rgba(255,255,255,0.7)'};">${checkmarks}</span></div>`;
-        } else {
-          infoHtml = `<div class="msg-info"><span>${timeStr}</span></div>`;
-        }
-
-        html += `
-          <div class="msg-bubble ${bubbleClass}">
-            <div><b>@${msg.sender}:</b> ${msg.text}</div>
-            ${infoHtml}
-          </div>
-        `;
-      });
-      messagesDiv.innerHTML = html;
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    updateTexts();
-  </script>
-</body>
-</html>
-
-
+          timeStr = date.toLocaleTimeString([],
+ 
