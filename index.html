@@ -137,8 +137,8 @@
         <!-- Описание PRO-пакета -->
         <div id="proDescription" style="font-size: 13px; color: #555; margin-bottom: 10px; line-height: 1.4;">
           <b>Возможности PRO-аккаунта:</b><br>
-          🏆 Уникальное эмодзи около имени<br>
-          ✅ Метка о верифицированном аккаунте
+          🏆 Кубок около имени<br>
+          ✨ Особый статус в чате
         </div>
 
         <button class="premium-btn" onclick="buySubscription()" data-i18n="buySubBtn">👑 Купить PRO Подписку</button>
@@ -205,7 +205,7 @@
         navProfile: "Профиль",
         buySubBtn: "👑 Купить PRO Подписку",
         subOwner: "Статус: 👑🛡️ Владелец приложения (Создатель)",
-        subActive: "Статус: 👑 PRO Подписка активна!",
+        subActive: "Статус: 🏆 PRO Подписка активна!",
         subNormal: "Статус: Базовый (Без подписки)",
         subSuccess: "Поздравляем! Вы успешно активировали PRO-подписку!",
         alertNoName: "Введите никнейм!",
@@ -238,7 +238,7 @@
         navProfile: "Profile",
         buySubBtn: "👑 Buy PRO Subscription",
         subOwner: "Status: 👑🛡️ App Owner (Creator)",
-        subActive: "Status: 👑 PRO Subscription Active!",
+        subActive: "Status: 🏆 PRO Subscription Active!",
         subNormal: "Status: Basic",
         subSuccess: "Congratulations! You activated PRO status!",
         alertNoName: "Enter a nickname!",
@@ -504,7 +504,7 @@
           badge = '<span class="owner-badge">👑 ВЛАДЕЛЕЦ</span>';
         } else if (isUserPro(username)) {
           nameClass = 'pro-text';
-          badge = '<span class="pro-badge">🏆 PRO ✅</span>';
+          badge = '<span class="pro-badge">🏆 PRO</span>';
         }
         
         html += `
@@ -522,7 +522,7 @@
       activeChatUser = username;
       let badge = '';
       if (isOwner(username)) badge = ' <span class="owner-badge">👑 ВЛАДЕЛЕЦ</span>';
-      else if (isUserPro(username)) badge = ' <span class="pro-badge">🏆 PRO ✅</span>';
+      else if (isUserPro(username)) badge = ' <span class="pro-badge">🏆 PRO</span>';
 
       document.getElementById('chatWithTitle').innerHTML = '@' + username + badge;
       
