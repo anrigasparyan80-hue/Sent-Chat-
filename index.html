@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -92,9 +93,10 @@
   </div>
 
   <script>
-    // 1. НАСТРОЙКИ SUPABASE
+    // 1. НАСТРОЙКИ SUPABASE (Правильный anon ключ)
     const SUPABASE_URL = 'https://oqfclosbphhdxhhkzzbm.supabase.co';
     const SUPABASE_KEY = 'EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xZmNsb3NicGhoZHhoaGt6emJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzOTYyODQsImV4cCI6MjEwMDk3MjI4NH0.uEltk9n5UBYvrXTrBLj9rvG1_yDPNMsQjaTiPq9mlNA';
+    
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let isSignUpMode = true;
@@ -262,4 +264,3 @@
   </script>
 </body>
 </html>
-
