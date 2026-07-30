@@ -47,7 +47,6 @@
     .msg-outgoing { background: #3ecf8e; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
     .msg-info { font-size: 11px; display: flex; justify-content: flex-end; gap: 4px; margin-top: 4px; opacity: 0.8; }
     
-    /* Значки */
     .owner-badge { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; display: inline-block; vertical-align: middle; }
     .owner-text { color: #c0392b !important; font-weight: bold; }
 
@@ -150,12 +149,11 @@
 
   <script>
     const SUPABASE_URL = 'https://avthoshhrwqsyqibxksl.supabase.co';
-    const SUPABASE_ANON_KEY = 'Sb_publishable_kjCzFKbauB9bZFiJPQ6jgA_5wi54HFU';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2dGhvc2hocndxc3lxaWJ4a3NsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5ODk4OTIsImV4cCI6MjA4NjU2NTg5Mn0.kjCzFKbauB9bZFiJPQ6jgA_5wi54HFU';
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Впиши сюда свой никнейм, под которым ты заходишь в приложение
-    const OWNER_USERNAME = 'Admin'; // Можешь заменить на свой ник, например 'Anri'
+    const OWNER_USERNAME = 'Admin';
 
     const translations = {
       ru: {
