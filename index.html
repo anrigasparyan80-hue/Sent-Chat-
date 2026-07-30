@@ -17,6 +17,7 @@
     
     button { width: 100%; padding: 12px; background: #3ecf8e; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 5px; }
     button.secondary { background: #666; }
+    button.anon-btn { background: #4a5568; }
     button.premium-btn { background: linear-gradient(135deg, #f39c12, #f1c40f); color: #fff; }
     
     .avatar-container { position: relative; width: 90px; height: 90px; margin: 0 auto 10px auto; cursor: pointer; }
@@ -80,6 +81,7 @@
       </div>
 
       <button id="authBtnAction" onclick="handleAuthAction()" data-i18n="authBtn">Получить код</button>
+      <button class="anon-btn" onclick="loginAnonymously()">👻 Войти анонимно (15 мин)</button>
     </div>
   </div>
 
@@ -153,6 +155,18 @@
                 setTimeout(() => splash.remove(), 500);
             }
         }, 1800);
+
+        // Проверка таймера анонимного входа при перезагрузке
+        if (localStorage.getItem('chat_is_anon') === 'true') {
+            const loginTime = parseInt(localStorage.getItem('chat_anon_time') || '0', 10);
+            const elapsed = Date.now() - loginTime;
+            const limit = 15 * 60 * 1000;
+            if (elapsed > limit) {
+                logout();
+            } else {
+                startAnonTimer(limit - elapsed);
+            }
+        }
     });
 
     const SUPABASE_URL = 'https://avthoshhrwqsyqibxksl.supabase.co';
@@ -260,6 +274,7 @@
     let messageInterval = null;
     let generatedSecretCode = '';
     let isCodeSent = false;
+    let anonTimer = null;
 
     if (currentUser) {
       initApp(currentUser, currentEmail);
@@ -278,19 +293,16 @@
       if (!email || !email.includes('@')) { alert(t.alertNoEmail); return; }
 
       if (!isCodeSent) {
-        // Шаг 1: Генерация кода
         generatedSecretCode = Math.floor(1000 + Math.random() * 9000).toString();
         document.getElementById('generatedCodeDisplay').innerText = generatedSecretCode;
         document.getElementById('codeSection').style.display = 'block';
         document.getElementById('authBtnAction').innerText = t.verifyCodeBtn;
         isCodeSent = true;
       } else {
-        // Шаг 2: Проверка кода
         const enteredCode = document.getElementById('codeInput').value.trim();
         if (!enteredCode) { alert(t.alertNoCode); return; }
         if (enteredCode !== generatedSecretCode) { alert(t.alertWrongCode); return; }
 
-        // Сохраняем пользователя в базу Supabase
         const { error } = await supabaseClient
           .from('profiles')
           .upsert({ username: name, phone: email }, { onConflict: 'username' });
@@ -304,6 +316,37 @@
         localStorage.setItem('chat_email', email);
         initApp(name, email);
       }
+    }
+
+    async function loginAnonymously() {
+      const randomId = Math.floor(1000 + Math.random() * 9000);
+      const anonName = `Guest_${randomId}`;
+      const anonEmail = `${anonName.toLowerCase()}@anon.local`;
+
+      const { error } = await supabaseClient
+        .from('profiles')
+        .upsert({ username: anonName, phone: anonEmail }, { onConflict: 'username' });
+
+      if (error) {
+        alert("Ошибка анонимного входа: " + error.message);
+        return;
+      }
+
+      localStorage.setItem('chat_user', anonName);
+      localStorage.setItem('chat_email', anonEmail);
+      localStorage.setItem('chat_is_anon', 'true');
+      localStorage.setItem('chat_anon_time', Date.now().toString());
+
+      initApp(anonName, anonEmail);
+      startAnonTimer(15 * 60 * 1000);
+    }
+
+    function startAnonTimer(duration) {
+      if (anonTimer) clearTimeout(anonTimer);
+      anonTimer = setTimeout(() => {
+        alert("Время анонимной сессии (15 минут) истекло!");
+        logout();
+      }, duration);
     }
 
     function initApp(name, email) {
@@ -327,6 +370,8 @@
     function logout() {
       localStorage.removeItem('chat_user');
       localStorage.removeItem('chat_email');
+      localStorage.removeItem('chat_is_anon');
+      localStorage.removeItem('chat_anon_time');
       location.reload();
     }
 
