@@ -47,6 +47,10 @@
     .msg-outgoing { background: #3ecf8e; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
     .msg-info { font-size: 11px; display: flex; justify-content: flex-end; gap: 4px; margin-top: 4px; opacity: 0.8; }
     
+    /* Значки */
+    .owner-badge { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; display: inline-block; vertical-align: middle; }
+    .owner-text { color: #c0392b !important; font-weight: bold; }
+
     .pro-badge { background: #f1c40f; color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; display: inline-block; vertical-align: middle; }
     .pro-text { color: #d4ac0d !important; font-weight: bold; }
   </style>
@@ -128,7 +132,7 @@
       <p style="margin-top: 15px;"><span data-i18n="yourNick">Ваш ник</span>: <b id="welcomeUser">@...</b></p>
       <p><span data-i18n="yourPhone">Телефон</span>: <b id="welcomePhone">+...</b></p>
       
-      <!-- Секция подписки -->
+      <!-- Секция статуса -->
       <div id="subscriptionCard" style="background: #fffdf0; border: 1px dashed #f1c40f; padding: 12px; border-radius: 8px; margin: 15px 0;">
         <p style="margin: 0 0 8px 0; font-size: 14px;" id="subStatusText">Статус: Обычный</p>
         <button class="premium-btn" onclick="buySubscription()" data-i18n="buySubBtn">👑 Купить PRO Подписку</button>
@@ -149,6 +153,9 @@
     const SUPABASE_ANON_KEY = 'Sb_publishable_kjCzFKbauB9bZFiJPQ6jgA_5wi54HFU';
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Впиши сюда свой никнейм, под которым ты заходишь в приложение
+    const OWNER_USERNAME = 'Admin'; // Можешь заменить на свой ник, например 'Anri'
 
     const translations = {
       ru: {
@@ -171,8 +178,9 @@
         navChats: "Чаты",
         navProfile: "Профиль",
         buySubBtn: "👑 Купить PRO Подписку",
-        subNormal: "Статус: Базовый (Без подписки)",
+        subOwner: "Статус: 🛡️ Владелец приложения (Создатель)",
         subActive: "Статус: 👑 PRO Подписка активна!",
+        subNormal: "Статус: Базовый (Без подписки)",
         subSuccess: "Поздравляем! Вы успешно активировали PRO-подписку!",
         alertNoName: "Введите никнейм!",
         alertNoPhone: "Введите номер телефона!",
@@ -200,8 +208,9 @@
         navChats: "Chats",
         navProfile: "Profile",
         buySubBtn: "👑 Buy PRO Subscription",
-        subNormal: "Status: Basic",
+        subOwner: "Status: 🛡️ App Owner (Creator)",
         subActive: "Status: 👑 PRO Subscription Active!",
+        subNormal: "Status: Basic",
         subSuccess: "Congratulations! You activated PRO status!",
         alertNoName: "Enter a nickname!",
         alertNoPhone: "Enter a phone number!",
@@ -242,6 +251,10 @@
 
     if (currentUser) {
       initApp(currentUser, currentPhone);
+    }
+
+    function isOwner(username) {
+      return username.toLowerCase() === OWNER_USERNAME.toLowerCase();
     }
 
     async function loginUser() {
@@ -318,7 +331,6 @@
       reader.readAsDataURL(file);
     }
 
-    // Логика PRO-подписки (сохраняется в localStorage)
     function buySubscription() {
       localStorage.setItem('chat_pro_' + currentUser, 'true');
       alert(translations[currentLang].subSuccess);
@@ -331,11 +343,18 @@
 
     function updateProfileUI() {
       const t = translations[currentLang];
-      const isPro = isUserPro(currentUser);
       const subTextEl = document.getElementById('subStatusText');
       const buyBtnEl = document.querySelector('.premium-btn');
+      const subCard = document.getElementById('subscriptionCard');
       
-      if (isPro) {
+      if (isOwner(currentUser)) {
+        subTextEl.innerText = t.subOwner;
+        subTextEl.style.color = "#c0392b";
+        subTextEl.style.fontWeight = "bold";
+        subCard.style.background = "#fdedec";
+        subCard.style.borderColor = "#e74c3c";
+        if(buyBtnEl) buyBtnEl.style.display = 'none';
+      } else if (isUserPro(currentUser)) {
         subTextEl.innerText = t.subActive;
         subTextEl.style.color = "#d4ac0d";
         subTextEl.style.fontWeight = "bold";
@@ -397,9 +416,16 @@
 
       let html = '';
       interlocutors.forEach(username => {
-        const proCheck = isUserPro(username);
-        const nameClass = proCheck ? 'pro-text' : '';
-        const badge = proCheck ? '<span class="pro-badge">PRO</span>' : '';
+        let nameClass = '';
+        let badge = '';
+
+        if (isOwner(username)) {
+          nameClass = 'owner-text';
+          badge = '<span class="owner-badge">ВЛАДЕЛЕЦ</span>';
+        } else if (isUserPro(username)) {
+          nameClass = 'pro-text';
+          badge = '<span class="pro-badge">PRO</span>';
+        }
         
         html += `
           <div class="chat-item" onclick="openChatRoom('${username}')">
@@ -414,8 +440,10 @@
 
     async function openChatRoom(username) {
       activeChatUser = username;
-      const proCheck = isUserPro(username);
-      const badge = proCheck ? ' <span class="pro-badge">PRO</span>' : '';
+      let badge = '';
+      if (isOwner(username)) badge = ' <span class="owner-badge">ВЛАДЕЛЕЦ</span>';
+      else if (isUserPro(username)) badge = ' <span class="pro-badge">PRO</span>';
+
       document.getElementById('chatWithTitle').innerHTML = '@' + username + badge;
       
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -440,7 +468,6 @@
       const text = document.getElementById('messageInput').value.trim();
       if (!activeChatUser || !text) return;
 
-      // Отправляем сообщение со статусом read: false (не прочитано)
       const { error } = await supabaseClient
         .from('messages')
         .insert([{ sender: currentUser, recipient: activeChatUser, text: text, read: false }]);
@@ -455,7 +482,6 @@
     }
 
     async function markMessagesAsRead() {
-      // Когда мы открываем чат, отмечаем все входящие от этого собеседника как прочитанные (read = true)
       await supabaseClient
         .from('messages')
         .update({ read: true })
@@ -478,7 +504,6 @@
         return;
       }
 
-      // Если появились новые входящие, сразу помечаем их прочитанными
       markMessagesAsRead();
 
       let html = '';
@@ -486,7 +511,6 @@
         const isMy = msg.sender === currentUser;
         const bubbleClass = isMy ? 'msg-outgoing' : 'msg-incoming';
         
-        // Время и галочки прочтения для своих сообщений
         let timeStr = "";
         if (msg.created_at) {
           const date = new Date(msg.created_at);
@@ -495,7 +519,6 @@
 
         let infoHtml = '';
         if (isMy) {
-          // Если read === true, рисуем две галочки (✓✓), иначе одну (✓)
           const checkmarks = msg.read ? '✓✓' : '✓';
           infoHtml = `<div class="msg-info"><span>${timeStr}</span> <span style="font-weight: bold; color: ${msg.read ? '#fff' : 'rgba(255,255,255,0.7)'};">${checkmarks}</span></div>`;
         } else {
@@ -516,4 +539,4 @@
     updateTexts();
   </script>
 </body>
-  </html>
+</html>
