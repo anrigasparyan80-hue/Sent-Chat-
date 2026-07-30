@@ -599,8 +599,8 @@ window.addEventListener('load', () => {
   </script>
 </body>
 </html>
-<!-- Настройки профиля -->
-<div id="user-profile-card" class="profile-card">
+<!-- Карточка профиля -->
+<div id="user-profile-card" class="profile-card" style="display: none;">
     <h3>Профиль Sent Chat</h3>
     <div class="profile-field">
         <label>Юзернейм:</label>
@@ -666,7 +666,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const usernameInput = document.getElementById("username-input");
     const birthdateInput = document.getElementById("birthdate-input");
     const saveBtn = document.getElementById("save-profile-btn");
+    const profileCard = document.getElementById("user-profile-card");
 
+    // Загружаем сохраненные данные
     if (localStorage.getItem("sent_chat_username")) {
         usernameInput.value = localStorage.getItem("sent_chat_username");
     }
@@ -674,10 +676,34 @@ document.addEventListener("DOMContentLoaded", () => {
         birthdateInput.value = localStorage.getItem("sent_chat_birthdate");
     }
 
+    // Сохранение данных
     saveBtn.addEventListener("click", () => {
         localStorage.setItem("sent_chat_username", usernameInput.value);
         localStorage.setItem("sent_chat_birthdate", birthdateInput.value);
         alert("Профиль успешно сохранен!");
     });
+
+    // Находим кнопки переключения "Чаты" и "Профиль" по тексту
+    const allElements = document.querySelectorAll("div, span, button, a");
+    allElements.forEach(el => {
+        // Проверяем текст кнопки (без лишних дочерних элементов)
+        if (el.children.length === 0) {
+            const text = el.textContent.trim();
+            
+            if (text === "Профиль") {
+                el.style.cursor = "pointer";
+                el.addEventListener("click", () => {
+                    profileCard.style.display = "block"; // Показываем профиль
+                });
+            }
+            if (text === "Чаты") {
+                el.style.cursor = "pointer";
+                el.addEventListener("click", () => {
+                    profileCard.style.display = "none"; // Скрываем профиль
+                });
+            }
+        }
+    });
 });
 </script>
+ 
