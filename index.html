@@ -175,7 +175,6 @@
   <button id="fab-menu-btn" class="fab-btn">+</button>
 
   <script>
-    // Скрытие сплеш-скрина при загрузке
     window.addEventListener('load', () => {
         setTimeout(() => {
             const splash = document.getElementById('splash-screen');
@@ -209,7 +208,7 @@
         profileHeader: "Профиль 👤",
         yourNick: "Ваш ник",
         yourPhone: "Телефон",
-        logoutBtn: "Выйти из аккаунта",
+        logoutBtn: "Сменить аккаунт",
         navChats: "Чаты",
         navProfile: "Профиль",
         buySubBtn: "👑 Купить PRO Подписку",
@@ -239,7 +238,7 @@
         profileHeader: "Profile 👤",
         yourNick: "Your nickname",
         yourPhone: "Phone",
-        logoutBtn: "Log out",
+        logoutBtn: "Switch Account",
         navChats: "Chats",
         navProfile: "Profile",
         buySubBtn: "👑 Buy PRO Subscription",
@@ -570,40 +569,6 @@
       messagesDiv.innerHTML = html;
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
-
-    // --- ФУНКЦИЯ СМЕНЫ АККАУНТОВ В ПРОФИЛЕ ---
-    document.addEventListener("DOMContentLoaded", () => {
-        let profileScreen = document.getElementById("profileScreen");
-        if (profileScreen) {
-            let accountContainer = document.createElement("div");
-            accountContainer.style.cssText = "margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 12px; text-align: center; border: 1px dashed #cbd5e1;";
-            
-            let currentAccount = localStorage.getItem("sent_current_account") || "Основной аккаунт";
-
-            accountContainer.innerHTML = `
-                <div style="font-size: 14px; color: #64748b; margin-bottom: 5px;">Активный профиль:</div>
-                <div id="account-name-display" style="font-size: 16px; font-weight: bold; color: #0f172a; margin-bottom: 12px;">${currentAccount}</div>
-                <button id="switch-account-btn" style="background: #0f172a; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; width: 100%;">Сменить / Добавить аккаунт</button>
-            `;
-            
-            // Вставляем блок в профиль перед кнопкой выхода
-            let logoutBtn = profileScreen.querySelector("button.secondary");
-            if (logoutBtn) {
-                logoutBtn.parentNode.insertBefore(accountContainer, logoutBtn);
-            } else {
-                profileScreen.querySelector(".card").appendChild(accountContainer);
-            }
-
-            document.getElementById("switch-account-btn").addEventListener("click", () => {
-                let newAcc = prompt("Введите имя нового аккаунта:", currentAccount);
-                if (newAcc && newAcc.trim() !== "") {
-                    localStorage.setItem("sent_current_account", newAcc.trim());
-                    alert(`Переключено на аккаунт: ${newAcc.trim()}`);
-                    location.reload();
-                }
-            });
-        }
-    });
   </script>
 </body>
 </html>
