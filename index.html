@@ -13,12 +13,8 @@
     .screen { display: none; flex: 1; padding: 15px; overflow-y: auto; }
     .screen.active { display: flex; flex-direction: column; }
     .card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
-    input[type="text"], input[type="tel"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; text-align: left; }
+    input[type="text"], input[type="email"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; text-align: left; }
     
-    .phone-row { display: flex; gap: 8px; margin: 8px 0; align-items: center; }
-    .phone-row select { width: 110px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; background: #fff; cursor: pointer; }
-    .phone-row input { flex: 1; margin: 0; }
-
     button { width: 100%; padding: 12px; background: #3ecf8e; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 5px; }
     button.secondary { background: #666; }
     button.premium-btn { background: linear-gradient(135deg, #f39c12, #f1c40f); color: #fff; }
@@ -52,25 +48,6 @@
 
     .pro-badge { background: #f1c40f; color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; display: inline-block; vertical-align: middle; }
     .pro-text { color: #d4ac0d !important; font-weight: bold; }
-
-    .fab-btn {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 56px;
-        height: 56px;
-        background: #10b981;
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        cursor: pointer;
-        border: none;
-        z-index: 1000;
-    }
   </style>
 </head>
 <body>
@@ -94,20 +71,15 @@
     <div class="card">
       <h3 data-i18n="authTitle">Вход в чат 🔑</h3>
       <input type="text" id="loginInput" placeholder="Введите ваш никнейм">
+      <input type="email" id="emailInput" placeholder="Введите ваш Email">
       
-      <div class="phone-row">
-        <select id="countryCode">
-          <option value="+995">🇬🇪 +995</option>
-          <option value="+7">🇷🇺/🇰🇿 +7</option>
-          <option value="+380">🇺🇦 +380</option>
-          <option value="+375">🇧🇾 +375</option>
-          <option value="+1">🇺🇸 +1</option>
-          <option value="+49">🇩🇪 +49</option>
-        </select>
-        <input type="tel" id="phoneInput" placeholder="Номер телефона">
+      <!-- Блок отправки/ввода кода -->
+      <div id="codeSection" style="display: none; margin-top: 10px;">
+        <p style="font-size: 13px; color: #666; margin-bottom: 5px;">Ваш проверочный код: <b id="generatedCodeDisplay" style="color: #3ecf8e; font-size: 16px;"></b></p>
+        <input type="text" id="codeInput" placeholder="Введите 4-значный код">
       </div>
 
-      <button onclick="loginUser()" data-i18n="authBtn">Войти в приложение</button>
+      <button id="authBtnAction" onclick="handleAuthAction()" data-i18n="authBtn">Получить код</button>
     </div>
   </div>
 
@@ -154,7 +126,7 @@
       <input type="file" id="avatarFile" accept="image/*" style="display: none;" onchange="changeAvatar(event)">
 
       <p style="margin-top: 15px;"><span data-i18n="yourNick">Ваш ник</span>: <b id="welcomeUser">@...</b></p>
-      <p><span data-i18n="yourPhone">Телефон</span>: <b id="welcomePhone">+...</b></p>
+      <p><span data-i18n="yourEmail">Email</span>: <b id="welcomeEmail">...</b></p>
       
       <!-- Секция статуса -->
       <div id="subscriptionCard" style="background: #fffdf0; border: 1px dashed #f1c40f; padding: 12px; border-radius: 8px; margin: 15px 0;">
@@ -162,7 +134,7 @@
         <button class="premium-btn" onclick="buySubscription()" data-i18n="buySubBtn">👑 Купить PRO Подписку</button>
       </div>
 
-      <button onclick="logout()" class="secondary" data-i18n="logoutBtn">Выйти из аккаунта</button>
+      <button onclick="logout()" class="secondary" data-i18n="logoutBtn">Сменить аккаунт</button>
     </div>
   </div>
 
@@ -171,8 +143,6 @@
     <button class="nav-btn active" id="navChatsBtn" onclick="switchMainTab('chatsScreen', this)" data-i18n="navChats">Чаты</button>
     <button class="nav-btn" id="navProfileBtn" onclick="switchMainTab('profileScreen', this)" data-i18n="navProfile">Профиль</button>
   </div>
-
-  <button id="fab-menu-btn" class="fab-btn">+</button>
 
   <script>
     window.addEventListener('load', () => {
@@ -195,8 +165,9 @@
       ru: {
         authTitle: "Вход в чат 🔑",
         authPlaceholder: "Введите ваш никнейм",
-        phonePlaceholder: "Номер телефона",
-        authBtn: "Войти в приложение",
+        emailPlaceholder: "Введите ваш Email",
+        getCodeBtn: "Получить код",
+        verifyCodeBtn: "Подтвердить и войти",
         chatsHeader: "Чаты 💬",
         startChatBtn: "Начать чат",
         recentChats: "Недавние диалоги",
@@ -207,7 +178,7 @@
         backBtn: "⬅ Назад",
         profileHeader: "Профиль 👤",
         yourNick: "Ваш ник",
-        yourPhone: "Телефон",
+        yourEmail: "Email",
         logoutBtn: "Сменить аккаунт",
         navChats: "Чаты",
         navProfile: "Профиль",
@@ -217,7 +188,9 @@
         subNormal: "Статус: Базовый (Без подписки)",
         subSuccess: "Поздравляем! Вы успешно активировали PRO-подписку!",
         alertNoName: "Введите никнейм!",
-        alertNoPhone: "Введите номер телефона!",
+        alertNoEmail: "Введите корректный Email!",
+        alertNoCode: "Введите код подтверждения!",
+        alertWrongCode: "Неверный код!",
         alertSelf: "Нельзя писать самому себе!",
         alertNoTarget: "Введите ник собеседника!",
         alertUserNotFound: "Такого пользователя не существует в базе!"
@@ -225,8 +198,9 @@
       en: {
         authTitle: "Chat Login 🔑",
         authPlaceholder: "Enter your nickname",
-        phonePlaceholder: "Phone number",
-        authBtn: "Sign In",
+        emailPlaceholder: "Enter your Email",
+        getCodeBtn: "Get Code",
+        verifyCodeBtn: "Verify & Sign In",
         chatsHeader: "Chats 💬",
         startChatBtn: "Start Chat",
         recentChats: "Recent Chats",
@@ -237,7 +211,7 @@
         backBtn: "⬅ Back",
         profileHeader: "Profile 👤",
         yourNick: "Your nickname",
-        yourPhone: "Phone",
+        yourEmail: "Email",
         logoutBtn: "Switch Account",
         navChats: "Chats",
         navProfile: "Profile",
@@ -247,7 +221,9 @@
         subNormal: "Status: Basic",
         subSuccess: "Congratulations! You activated PRO status!",
         alertNoName: "Enter a nickname!",
-        alertNoPhone: "Enter a phone number!",
+        alertNoEmail: "Enter a valid Email!",
+        alertNoCode: "Enter verification code!",
+        alertWrongCode: "Incorrect code!",
         alertSelf: "You cannot message yourself!",
         alertNoTarget: "Enter recipient's nickname!",
         alertUserNotFound: "User does not exist in database!"
@@ -272,55 +248,69 @@
         }
       });
       document.getElementById('loginInput').placeholder = t.authPlaceholder;
-      document.getElementById('phoneInput').placeholder = t.phonePlaceholder;
+      document.getElementById('emailInput').placeholder = t.emailPlaceholder;
       document.getElementById('targetUser').placeholder = "Ник собеседника...";
       document.getElementById('messageInput').placeholder = t.msgPlaceholder;
       updateProfileUI();
     }
 
     let currentUser = localStorage.getItem('chat_user') || '';
-    let currentPhone = localStorage.getItem('chat_phone') || '';
+    let currentEmail = localStorage.getItem('chat_email') || '';
     let activeChatUser = '';
     let messageInterval = null;
+    let generatedSecretCode = '';
+    let isCodeSent = false;
 
     if (currentUser) {
-      initApp(currentUser, currentPhone);
+      initApp(currentUser, currentEmail);
     }
 
     function isOwner(username) {
       return username.toLowerCase() === OWNER_USERNAME.toLowerCase();
     }
 
-    async function loginUser() {
+    async function handleAuthAction() {
       const name = document.getElementById('loginInput').value.trim();
-      const code = document.getElementById('countryCode').value;
-      const rawPhone = document.getElementById('phoneInput').value.trim();
+      const email = document.getElementById('emailInput').value.trim();
       const t = translations[currentLang];
 
       if (!name) { alert(t.alertNoName); return; }
-      if (!rawPhone) { alert(t.alertNoPhone); return; }
+      if (!email || !email.includes('@')) { alert(t.alertNoEmail); return; }
 
-      const fullPhone = code + ' ' + rawPhone;
+      if (!isCodeSent) {
+        // Шаг 1: Генерация кода
+        generatedSecretCode = Math.floor(1000 + Math.random() * 9000).toString();
+        document.getElementById('generatedCodeDisplay').innerText = generatedSecretCode;
+        document.getElementById('codeSection').style.display = 'block';
+        document.getElementById('authBtnAction').innerText = t.verifyCodeBtn;
+        isCodeSent = true;
+      } else {
+        // Шаг 2: Проверка кода
+        const enteredCode = document.getElementById('codeInput').value.trim();
+        if (!enteredCode) { alert(t.alertNoCode); return; }
+        if (enteredCode !== generatedSecretCode) { alert(t.alertWrongCode); return; }
 
-      const { error } = await supabaseClient
-        .from('profiles')
-        .upsert({ username: name, phone: fullPhone }, { onConflict: 'username' });
+        // Сохраняем пользователя в базу Supabase
+        const { error } = await supabaseClient
+          .from('profiles')
+          .upsert({ username: name, phone: email }, { onConflict: 'username' });
 
-      if (error) {
-        alert("Ошибка входа: " + error.message);
-        return;
+        if (error) {
+          alert("Ошибка входа: " + error.message);
+          return;
+        }
+
+        localStorage.setItem('chat_user', name);
+        localStorage.setItem('chat_email', email);
+        initApp(name, email);
       }
-
-      localStorage.setItem('chat_user', name);
-      localStorage.setItem('chat_phone', fullPhone);
-      initApp(name, fullPhone);
     }
 
-    function initApp(name, phone) {
+    function initApp(name, email) {
       currentUser = name;
-      currentPhone = phone;
+      currentEmail = email;
       document.getElementById('welcomeUser').innerText = '@' + name;
-      document.getElementById('welcomePhone').innerText = phone;
+      document.getElementById('welcomeEmail').innerText = email;
       
       const savedAvatar = localStorage.getItem('chat_avatar_' + name);
       if (savedAvatar) {
@@ -336,7 +326,7 @@
 
     function logout() {
       localStorage.removeItem('chat_user');
-      localStorage.removeItem('chat_phone');
+      localStorage.removeItem('chat_email');
       location.reload();
     }
 
