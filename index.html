@@ -4,7 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Запрет кэширования для обновления кода -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Sent Chat</title>
+  <!-- Подключение Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; }
@@ -17,6 +22,7 @@
     input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
     button { width: 100%; padding: 12px; background: #3ecf8e; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 5px; }
     button.secondary { background: #666; }
+    button:active { opacity: 0.8; }
     
     .user-card { background: #eef9f5; padding: 12px; margin-top: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
     .user-card button { width: auto; padding: 6px 14px; margin: 0; font-size: 13px; }
@@ -32,27 +38,27 @@
 
   <div class="header">Sent Chat</div>
 
-  <!-- ВХОД / РЕГИСТРАЦИЯ -->
+  <!-- 0. АВТОРИЗАЦИЯ / РЕГИСТРАЦИЯ -->
   <div id="authScreen" class="screen active">
     <div class="card">
       <h3 id="authTitle">Регистрация 📝</h3>
-      <input type="text" id="regUsername" placeholder="Логин (например: Alex7577)">
+      <input type="text" id="regUsername" placeholder="Ваш логин (например: Alex7577)">
       <input type="email" id="authEmail" placeholder="Email">
-      <input type="password" id="authPassword" placeholder="Пароль (мин. 6 символов)">
+      <input type="password" id="authPassword" placeholder="Пароль">
       <button onclick="handleAuth()" id="authBtn">Зарегистрироваться</button>
       <button onclick="toggleAuthMode()" class="secondary" id="switchAuthBtn">Уже есть аккаунт? Войти</button>
     </div>
   </div>
 
-  <!-- ЧАТЫ -->
+  <!-- 1. ЧАТЫ -->
   <div id="chatsScreen" class="screen">
     <div class="card">
       <h3>Сообщения 💬</h3>
-      <p style="color: #888;">Найдите друзей во вкладке «Поиск», чтобы общаться.</p>
+      <p style="color: #888;">Добавьте пользователей во вкладке «Поиск», чтобы переписываться.</p>
     </div>
   </div>
 
-  <!-- ПОИСК И ДРУЗЬЯ -->
+  <!-- 2. ПОИСК -->
   <div id="searchScreen" class="screen">
     <div class="card">
       <h3>Поиск пользователей 🔍</h3>
@@ -67,7 +73,7 @@
     </div>
   </div>
 
-  <!-- ПРОФИЛЬ -->
+  <!-- 3. ПРОФИЛЬ -->
   <div id="profileScreen" class="screen">
     <div class="card">
       <h3>Мой профиль 👤</h3>
@@ -87,10 +93,7 @@
     const SUPABASE_URL = 'https://oqfclosbphhdxhhkzzbm.supabase.co';
     const SUPABASE_KEY = 'EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xZmNsb3NicGhoZHhoaGt6emJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzOTYyODQsImV4cCI6MjEwMDk3MjI4NH0.uEltk9n5UBYvrXTrBLj9rvG1_yDPNMsQjaTiPq9mlNA';
     
-    // Инициализация с явной передачей параметров
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true }
-    });
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let isSignUpMode = true;
     let currentUsername = '';
@@ -109,36 +112,25 @@
       const username = document.getElementById('regUsername').value.trim();
 
       if (!email || !password || (isSignUpMode && !username)) {
-        alert('Заполните все поля!');
+        alert('Пожалуйста, заполните все поля!');
         return;
       }
 
       if (isSignUpMode) {
-        const { data, error } = await supabaseClient.auth.signUp({ 
-          email, 
-          password,
-          options: { data: { username: username } }
-        });
-        
-        if (error) { 
-          alert('Ошибка регистрации: ' + error.message); 
-          return; 
-        }
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) { alert('Ошибка регистрации: ' + error.message); return; }
 
         if (data.user) {
-          await supabaseClient.from('profiles').upsert([{ id: data.user.id, username: username }]);
+          await supabaseClient.from('profiles').insert([{ id: data.user.id, username: username }]);
           alert('Регистрация прошла успешно!');
           initApp(data.user, username);
         }
       } else {
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) { 
-          alert('Ошибка входа: ' + error.message); 
-          return; 
-        }
+        if (error) { alert('Ошибка входа: ' + error.message); return; }
 
-        const { data: profile } = await supabaseClient.from('profiles').select('username').eq('id', data.user.id).maybeSingle();
-        const userUsername = profile ? profile.username : (data.user.user_metadata.username || email.split('@')[0]);
+        const { data: profile } = await supabaseClient.from('profiles').select('username').eq('id', data.user.id).single();
+        const userUsername = profile ? profile.username : email.split('@')[0];
         initApp(data.user, userUsername);
       }
     }
@@ -174,7 +166,7 @@
       resultsDiv.innerHTML = 'Ищем...';
 
       if (!query) {
-        resultsDiv.innerHTML = 'Введите логин!';
+        resultsDiv.innerHTML = 'Введите имя для поиска!';
         return;
       }
 
@@ -207,7 +199,7 @@
         .insert([{ user_from: currentUsername, user_to: friendUsername, status: 'accepted' }]);
 
       if (error) {
-        alert('Ошибка добавления: ' + error.message);
+        alert('Ошибка при добавлении: ' + error.message);
       } else {
         alert(`@${friendUsername} добавлен в друзья!`);
         loadFriends();
@@ -222,7 +214,7 @@
         .or(`user_from.eq.${currentUsername},user_to.eq.${currentUsername}`);
 
       if (error || !data || data.length === 0) {
-        friendsListDiv.innerHTML = '<p style="color:#888;">Список друзей пуст</p>';
+        friendsListDiv.innerHTML = '<p style="color:#888;">У вас пока нет друзей</p>';
         return;
       }
 
@@ -238,8 +230,8 @@
     async function checkSession() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
-        const { data: profile } = await supabaseClient.from('profiles').select('username').eq('id', session.user.id).maybeSingle();
-        const userUsername = profile ? profile.username : (session.user.user_metadata.username || session.user.email.split('@')[0]);
+        const { data: profile } = await supabaseClient.from('profiles').select('username').eq('id', session.user.id).single();
+        const userUsername = profile ? profile.username : session.user.email.split('@')[0];
         initApp(session.user, userUsername);
       }
     }
