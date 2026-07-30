@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sent Chat</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background-color: #f4f6f8; display: flex; flex-direction: column; height: 100vh; }
@@ -141,11 +140,14 @@
     <button class="nav-btn" id="navProfileBtn" onclick="switchMainTab('profileScreen', this)" data-i18n="navProfile">Профиль</button>
   </div>
 
-  <script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
     const SUPABASE_URL = 'https://avthoshhrwqsyqibxksl.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2dGhvc2hocndxc3lxaWJ4a3NsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5ODk4OTIsImV4cCI6MjA4NjU2NTg5Mn0.kjCzFKbauB9bZFiJPQ6jgA_5wi54HFU';
 
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window.supabaseClient = supabaseClient; // Делаем доступным глобально для кнопок
 
     const OWNER_USERNAME = 'Admin';
 
@@ -215,7 +217,7 @@
     let currentLang = localStorage.getItem('chat_lang') || 'ru';
     document.getElementById('langSelect').value = currentLang;
 
-    function changeLanguage(lang) {
+    window.changeLanguage = function(lang) {
       currentLang = lang;
       localStorage.setItem('chat_lang', lang);
       updateTexts();
@@ -231,280 +233,4 @@
       });
       document.getElementById('loginInput').placeholder = t.authPlaceholder;
       document.getElementById('phoneInput').placeholder = t.phonePlaceholder;
-      document.getElementById('targetUser').placeholder = "Ник собеседника...";
-      document.getElementById('messageInput').placeholder = t.msgPlaceholder;
-      updateProfileUI();
-    }
-
-    let currentUser = localStorage.getItem('chat_user') || '';
-    let currentPhone = localStorage.getItem('chat_phone') || '';
-    let activeChatUser = '';
-    let messageInterval = null;
-
-    if (currentUser) {
-      initApp(currentUser, currentPhone);
-    }
-
-    function isOwner(username) {
-      return username.toLowerCase() === OWNER_USERNAME.toLowerCase();
-    }
-
-    async function loginUser() {
-      const name = document.getElementById('loginInput').value.trim();
-      const code = document.getElementById('countryCode').value;
-      const rawPhone = document.getElementById('phoneInput').value.trim();
-      const t = translations[currentLang];
-
-      if (!name) { alert(t.alertNoName); return; }
-      if (!rawPhone) { alert(t.alertNoPhone); return; }
-
-      const fullPhone = code + ' ' + rawPhone;
-
-      const { error } = await supabaseClient
-        .from('profiles')
-        .upsert({ username: name, phone: fullPhone }, { onConflict: 'username' });
-
-      if (error) {
-        alert("Ошибка входа: " + error.message);
-        return;
-      }
-
-      localStorage.setItem('chat_user', name);
-      localStorage.setItem('chat_phone', fullPhone);
-      initApp(name, fullPhone);
-    }
-
-    function initApp(name, phone) {
-      currentUser = name;
-      currentPhone = phone;
-      document.getElementById('welcomeUser').innerText = '@' + name;
-      document.getElementById('welcomePhone').innerText = phone;
-      
-      const savedAvatar = localStorage.getItem('chat_avatar_' + name);
-      if (savedAvatar) {
-        document.getElementById('userAvatar').src = savedAvatar;
-      }
-
-      document.getElementById('authScreen').classList.remove('active');
-      document.getElementById('mainNav').classList.add('active');
-      switchMainTab('chatsScreen', document.getElementById('navChatsBtn'));
-      loadUserChats();
-      updateTexts();
-    }
-
-    function logout() {
-      localStorage.removeItem('chat_user');
-      localStorage.removeItem('chat_phone');
-      location.reload();
-    }
-
-    function switchMainTab(screenId, btn) {
-      document.querySelectorAll('.screen').forEach(s => {
-        if(s.id !== 'chatRoomScreen') s.classList.remove('active');
-      });
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(screenId).classList.add('active');
-      if (btn) btn.classList.add('active');
-      if (screenId === 'chatsScreen') {
-        loadUserChats();
-      }
-    }
-
-    function changeAvatar(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const base64Image = e.target.result;
-        document.getElementById('userAvatar').src = base64Image;
-        localStorage.setItem('chat_avatar_' + currentUser, base64Image);
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function buySubscription() {
-      localStorage.setItem('chat_pro_' + currentUser, 'true');
-      alert(translations[currentLang].subSuccess);
-      updateProfileUI();
-    }
-
-    function isUserPro(username) {
-      return localStorage.getItem('chat_pro_' + username) === 'true';
-    }
-
-    function updateProfileUI() {
-      const t = translations[currentLang];
-      const subTextEl = document.getElementById('subStatusText');
-      const buyBtnEl = document.querySelector('.premium-btn');
-      const subCard = document.getElementById('subscriptionCard');
-      
-      if (isOwner(currentUser)) {
-        subTextEl.innerText = t.subOwner;
-        subTextEl.style.color = "#c0392b";
-        subTextEl.style.fontWeight = "bold";
-        subCard.style.background = "#fdedec";
-        subCard.style.borderColor = "#e74c3c";
-        if(buyBtnEl) buyBtnEl.style.display = 'none';
-      } else if (isUserPro(currentUser)) {
-        subTextEl.innerText = t.subActive;
-        subTextEl.style.color = "#d4ac0d";
-        subTextEl.style.fontWeight = "bold";
-        if(buyBtnEl) buyBtnEl.style.display = 'none';
-      } else {
-        subTextEl.innerText = t.subNormal;
-        subTextEl.style.color = "#333";
-        subTextEl.style.fontWeight = "normal";
-        if(buyBtnEl) buyBtnEl.style.display = 'block';
-      }
-    }
-
-    async function startNewChat() {
-      const target = document.getElementById('targetUser').value.trim();
-      const t = translations[currentLang];
-      if (!target) { alert(t.alertNoTarget); return; }
-      if (target === currentUser) { alert(t.alertSelf); return; }
-
-      const { data, error } = await supabaseClient
-        .from('profiles')
-        .select('username')
-        .eq('username', target)
-        .single();
-
-      if (error || !data) {
-        alert(t.alertUserNotFound);
-        return;
-      }
-
-      document.getElementById('targetUser').value = '';
-      openChatRoom(target);
-    }
-
-    async function loadUserChats() {
-      const container = document.getElementById('chatsListContainer');
-      const t = translations[currentLang];
-
-      const { data, error } = await supabaseClient
-        .from('messages')
-        .select('*')
-        .or(`sender.eq.${currentUser},recipient.eq.${currentUser}`)
-        .order('created_at', { ascending: false });
-
-      if (error || !data || data.length === 0) {
-        container.innerHTML = `<div style="color: #888; text-align: center; padding: 20px;">${t.noChats}</div>`;
-        return;
-      }
-
-      const interlocutors = new Set();
-      data.forEach(msg => {
-        if (msg.sender === currentUser) interlocutors.add(msg.recipient);
-        if (msg.recipient === currentUser) interlocutors.add(msg.sender);
-      });
-
-      if (interlocutors.size === 0) {
-        container.innerHTML = `<div style="color: #888; text-align: center; padding: 20px;">${t.noChats}</div>`;
-        return;
-      }
-
-      let html = '';
-      interlocutors.forEach(username => {
-        let nameClass = '';
-        let badge = '';
-
-        if (isOwner(username)) {
-          nameClass = 'owner-text';
-          badge = '<span class="owner-badge">ВЛАДЕЛЕЦ</span>';
-        } else if (isUserPro(username)) {
-          nameClass = 'pro-text';
-          badge = '<span class="pro-badge">PRO</span>';
-        }
-        
-        html += `
-          <div class="chat-item" onclick="openChatRoom('${username}')">
-            <div>
-              <div class="chat-item-name ${nameClass}">@${username} ${badge}</div>
-            </div>
-          </div>
-        `;
-      });
-      container.innerHTML = html;
-    }
-
-    async function openChatRoom(username) {
-      activeChatUser = username;
-      let badge = '';
-      if (isOwner(username)) badge = ' <span class="owner-badge">ВЛАДЕЛЕЦ</span>';
-      else if (isUserPro(username)) badge = ' <span class="pro-badge">PRO</span>';
-
-      document.getElementById('chatWithTitle').innerHTML = '@' + username + badge;
-      
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById('mainNav').classList.remove('active');
-      document.getElementById('chatRoomScreen').classList.add('active');
-
-      markMessagesAsRead();
-      loadMessages();
-      if (messageInterval) clearInterval(messageInterval);
-      messageInterval = setInterval(loadMessages, 3000);
-    }
-
-    function closeChat() {
-      if (messageInterval) clearInterval(messageInterval);
-      document.getElementById('chatRoomScreen').classList.remove('active');
-      document.getElementById('chatsScreen').classList.add('active');
-      document.getElementById('mainNav').classList.add('active');
-      loadUserChats();
-    }
-
-    async function sendMessage() {
-      const text = document.getElementById('messageInput').value.trim();
-      if (!activeChatUser || !text) return;
-
-      const { error } = await supabaseClient
-        .from('messages')
-        .insert([{ sender: currentUser, recipient: activeChatUser, text: text, read: false }]);
-
-      if (error) {
-        alert("Ошибка отправки: " + error.message);
-        return;
-      }
-
-      document.getElementById('messageInput').value = '';
-      loadMessages();
-    }
-
-    async function markMessagesAsRead() {
-      await supabaseClient
-        .from('messages')
-        .update({ read: true })
-        .eq('sender', activeChatUser)
-        .eq('recipient', currentUser);
-    }
-
-    async function loadMessages() {
-      if (!activeChatUser) return;
-
-      const { data, error } = await supabaseClient
-        .from('messages')
-        .select('*')
-        .or(`and(sender.eq.${currentUser},recipient.eq.${activeChatUser}),and(sender.eq.${activeChatUser},recipient.eq.${currentUser})`)
-        .order('created_at', { ascending: true });
-
-      const messagesDiv = document.getElementById('messagesList');
-      if (error || !data || data.length === 0) {
-        messagesDiv.innerHTML = `<div style="text-align: center; color: #888; margin-top: auto; margin-bottom: auto;">${translations[currentLang].noMessages}</div>`;
-        return;
-      }
-
-      markMessagesAsRead();
-
-      let html = '';
-      data.forEach(msg => {
-        const isMy = msg.sender === currentUser;
-        const bubbleClass = isMy ? 'msg-outgoing' : 'msg-incoming';
-        
-        let timeStr = "";
-        if (msg.created_at) {
-          const date = new Date(msg.created_at);
-          timeStr = date.toLocaleTimeString([],
- 
+      document.getElementById('target
