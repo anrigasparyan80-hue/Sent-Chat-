@@ -47,7 +47,17 @@
     
     .msg-reaction { position: absolute; bottom: -10px; right: 10px; background: white; border: 1px solid #ddd; border-radius: 12px; padding: 2px 6px; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-    /* Стили для NFT подарка в сообщении */
+    .msg-sticker { background: transparent !important; border: none !important; box-shadow: none !important; font-size: 48px; padding: 0; text-align: center; }
+
+    .reply-quote { background: rgba(0,0,0,0.06); border-left: 3px solid #3ecf8e; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-bottom: 6px; opacity: 0.85; }
+    .msg-outgoing .reply-quote { background: rgba(255,255,255,0.2); border-left-color: white; }
+
+    #replyingBar { display: none; background: #eee; padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; align-items: center; justify-content: space-between; }
+
+    #stickerPanel { display: none; background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 8px; grid-template-columns: repeat(5, 1fr); gap: 8px; text-align: center; font-size: 28px; }
+    .sticker-item { cursor: pointer; transition: transform 0.1s; }
+    .sticker-item:hover { transform: scale(1.2); }
+
     .nft-gift-box { background: linear-gradient(135deg, #f39c12, #d35400); color: white; padding: 10px; border-radius: 8px; margin-top: 5px; text-align: center; border: 2px dashed #f1c40f; }
     .nft-gift-title { font-weight: bold; font-size: 15px; }
     .nft-gift-serial { font-size: 12px; opacity: 0.9; margin-top: 2px; }
@@ -117,11 +127,37 @@
     
     <div id="messagesList" class="messages-container" data-i18n="noMessages">Сообщений пока нет</div>
     
-    <!-- Панель ввода сообщения + кнопка подарка -->
-    <div style="display: flex; gap: 8px; align-items: center;">
+    <!-- Панель ответа на сообщение (Reply) -->
+    <div id="replyingBar">
+      <div>↩ Ответ на: <span id="replyingTextPreview" style="font-weight: bold;"></span></div>
+      <button onclick="cancelReply()" style="background: none; border: none; color: #666; font-size: 16px; cursor: pointer; width: auto; padding: 0; margin: 0;">✕</button>
+    </div>
+
+    <!-- Панель выбора стикеров (эмодзи) -->
+    <div id="stickerPanel">
+      <div class="sticker-item" onclick="sendSticker('🔥')">🔥</div>
+      <div class="sticker-item" onclick="sendSticker('😎')">😎</div>
+      <div class="sticker-item" onclick="sendSticker('👍')">👍</div>
+      <div class="sticker-item" onclick="sendSticker('🎉')">🎉</div>
+      <div class="sticker-item" onclick="sendSticker('😂')">😂</div>
+      <div class="sticker-item" onclick="sendSticker('❤️')">❤️</div>
+      <div class="sticker-item" onclick="sendSticker('🚀')">🚀</div>
+      <div class="sticker-item" onclick="sendSticker('💩')">💩</div>
+      <div class="sticker-item" onclick="sendSticker('🦄')">🦄</div>
+      <div class="sticker-item" onclick="sendSticker('🍕')">🍕</div>
+    </div>
+
+    <!-- Панель ввода сообщения + кнопки управления -->
+    <div style="display: flex; gap: 5px; align-items: center;">
+      <button onclick="toggleStickerPanel()" style="margin:0; width: 38px; background: #f39c12;" title="Стикеры">🎨</button>
+      
+      <!-- Кнопка загрузки своего стикера-картинки -->
+      <input type="file" id="stickerFile" accept="image/*" style="display: none;" onchange="sendImageSticker(event)">
+      <button onclick="document.getElementById('stickerFile').click()" style="margin:0; width: 38px; background: #e67e22;" title="Загрузить свой стикер">🖼️</button>
+
       <input type="text" id="messageInput" placeholder="Введите сообщение..." style="margin:0;">
-      <button onclick="openGiftModal()" style="margin:0; width: 45px; background: #9b59b6;" title="Отправить NFT подарок">🎁</button>
-      <button onclick="sendMessage()" style="margin:0; width: 90px;" data-i18n="sendBtn">Отправить</button>
+      <button onclick="openGiftModal()" style="margin:0; width: 38px; background: #9b59b6;" title="NFT подарок">🎁</button>
+      <button onclick="sendMessage()" style="margin:0; width: 75px;" data-i18n="sendBtn">Отпр.</button>
     </div>
   </div>
 
@@ -139,20 +175,11 @@
       <p style="margin-top: 15px;"><span data-i18n="yourNick">Ваш ник</span>: <b id="welcomeUser">@...</b></p>
       <p><span data-i18n="yourEmail">Email</span>: <b id="welcomeEmail">...</b></p>
       
-      <!-- Секция статуса и описания PRO -->
       <div id="subscriptionCard" style="background: #fffdf0; border: 1px dashed #f1c40f; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: left;">
         <p style="margin: 0 0 8px 0; font-size: 14px; text-align: center;" id="subStatusText">Статус: Обычный</p>
-        
-        <div id="proDescription" style="font-size: 13px; color: #555; margin-bottom: 10px; line-height: 1.4;">
-          <b>Возможности PRO-аккаунта:</b><br>
-          🏆 Кубок около имени<br>
-          ✨ Особый статус в чате
-        </div>
-
         <button class="premium-btn" onclick="buySubscription()" data-i18n="buySubBtn">👑 Купить PRO Подписку</button>
       </div>
 
-      <!-- Блок создания NFT подарка -->
       <div style="background: #f4ecf7; border: 1px dashed #9b59b6; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: left;">
         <p style="margin: 0 0 8px 0; font-size: 14px; text-align: center; font-weight: bold; color: #8e44ad;">💎 Создать NFT Подарок</p>
         <select id="nftTypeSelect">
@@ -168,12 +195,12 @@
     </div>
   </div>
 
-  <!-- МОДАЛЬНОЕ ОКНО ВЫБОРА ПОДАРКА ДЛЯ ОТПРАВКИ -->
+  <!-- МОДАЛЬНОЕ ОКНО ПОДАРКОВ -->
   <div id="giftModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
     <div style="background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center;">
       <h3 style="margin-top: 0; color: #8e44ad;">🎁 Отправить NFT подарок</h3>
       <div id="myNftListContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; text-align: left;">
-        <p style="color: #666; text-align: center;">У вас нет созданных NFT подарков. Создайте их в профиле!</p>
+        <p style="color: #666; text-align: center;">У вас нет NFT подарков.</p>
       </div>
       <button class="secondary" onclick="closeGiftModal()">Отмена</button>
     </div>
@@ -199,11 +226,8 @@
             const loginTime = parseInt(localStorage.getItem('chat_anon_time') || '0', 10);
             const elapsed = Date.now() - loginTime;
             const limit = 15 * 60 * 1000;
-            if (elapsed > limit) {
-                logout();
-            } else {
-                startAnonTimer(limit - elapsed);
-            }
+            if (elapsed > limit) logout();
+            else startAnonTimer(limit - elapsed);
         }
     });
 
@@ -221,12 +245,12 @@
         getCodeBtn: "Получить код",
         verifyCodeBtn: "Подтвердить и войти",
         chatsHeader: "Чаты 💬",
-        startChatBtn: "Начать чат",
+        startChatBtn: "Начать",
         recentChats: "Недавние диалоги",
-        noChats: "Список чатов пуст. Начните новый диалог выше!",
+        noChats: "Список чатов пуст.",
         noMessages: "Сообщений пока нет",
         msgPlaceholder: "Введите сообщение...",
-        sendBtn: "Отправить",
+        sendBtn: "Отпр.",
         backBtn: "⬅ Назад",
         profileHeader: "Профиль 👤",
         yourNick: "Ваш ник",
@@ -234,18 +258,7 @@
         logoutBtn: "Сменить аккаунт",
         navChats: "Чаты",
         navProfile: "Профиль",
-        buySubBtn: "👑 Купить PRO Подписку",
-        subOwner: "Статус: 👑🛡️ Владелец приложения (Создатель)",
-        subActive: "Статус: 🏆 PRO Подписка активна!",
-        subNormal: "Статус: Базовый (Без подписки)",
-        subSuccess: "Поздравляем! Вы успешно активировали PRO-подписку!",
-        alertNoName: "Введите никнейм!",
-        alertNoEmail: "Введите корректный Email!",
-        alertNoCode: "Введите код подтверждения!",
-        alertWrongCode: "Неверный код!",
-        alertSelf: "Нельзя писать самому себе!",
-        alertNoTarget: "Введите ник собеседника!",
-        alertUserNotFound: "Такого пользователя не существует в базе!"
+        buySubBtn: "👑 Купить PRO Подписку"
       },
       en: {
         authTitle: "Chat Login 🔑",
@@ -254,9 +267,9 @@
         getCodeBtn: "Get Code",
         verifyCodeBtn: "Verify & Sign In",
         chatsHeader: "Chats 💬",
-        startChatBtn: "Start Chat",
+        startChatBtn: "Start",
         recentChats: "Recent Chats",
-        noChats: "No chats yet. Start a new chat above!",
+        noChats: "No chats yet.",
         noMessages: "No messages yet",
         msgPlaceholder: "Type a message...",
         sendBtn: "Send",
@@ -267,18 +280,7 @@
         logoutBtn: "Switch Account",
         navChats: "Chats",
         navProfile: "Profile",
-        buySubBtn: "👑 Buy PRO Subscription",
-        subOwner: "Status: 👑🛡️ App Owner (Creator)",
-        subActive: "Status: 🏆 PRO Subscription Active!",
-        subNormal: "Status: Basic",
-        subSuccess: "Congratulations! You activated PRO status!",
-        alertNoName: "Enter a nickname!",
-        alertNoEmail: "Enter a valid Email!",
-        alertNoCode: "Enter verification code!",
-        alertWrongCode: "Incorrect code!",
-        alertSelf: "You cannot message yourself!",
-        alertNoTarget: "Enter recipient's nickname!",
-        alertUserNotFound: "User does not exist in database!"
+        buySubBtn: "👑 Buy PRO Subscription"
       }
     };
 
@@ -313,10 +315,9 @@
     let generatedSecretCode = '';
     let isCodeSent = false;
     let anonTimer = null;
+    let replyingToText = null;
 
-    if (currentUser) {
-      initApp(currentUser, currentEmail);
-    }
+    if (currentUser) initApp(currentUser, currentEmail);
 
     function isOwner(username) {
       return username.toLowerCase() === OWNER_USERNAME.toLowerCase();
@@ -325,31 +326,19 @@
     async function handleAuthAction() {
       const name = document.getElementById('loginInput').value.trim();
       const email = document.getElementById('emailInput').value.trim();
-      const t = translations[currentLang];
-
-      if (!name) { alert(t.alertNoName); return; }
-      if (!email || !email.includes('@')) { alert(t.alertNoEmail); return; }
+      if (!name || !email || !email.includes('@')) { alert("Заполните корректно поля!"); return; }
 
       if (!isCodeSent) {
         generatedSecretCode = Math.floor(1000 + Math.random() * 9000).toString();
         document.getElementById('generatedCodeDisplay').innerText = generatedSecretCode;
         document.getElementById('codeSection').style.display = 'block';
-        document.getElementById('authBtnAction').innerText = t.verifyCodeBtn;
+        document.getElementById('authBtnAction').innerText = "Подтвердить и войти";
         isCodeSent = true;
       } else {
         const enteredCode = document.getElementById('codeInput').value.trim();
-        if (!enteredCode) { alert(t.alertNoCode); return; }
-        if (enteredCode !== generatedSecretCode) { alert(t.alertWrongCode); return; }
+        if (enteredCode !== generatedSecretCode) { alert("Неверный код!"); return; }
 
-        const { error } = await supabaseClient
-          .from('profiles')
-          .upsert({ username: name, phone: email }, { onConflict: 'username' });
-
-        if (error) {
-          alert("Ошибка входа: " + error.message);
-          return;
-        }
-
+        await supabaseClient.from('profiles').upsert({ username: name, phone: email }, { onConflict: 'username' });
         localStorage.setItem('chat_user', name);
         localStorage.setItem('chat_email', email);
         initApp(name, email);
@@ -357,34 +346,21 @@
     }
 
     async function loginAnonymously() {
-      const randomId = Math.floor(1000 + Math.random() * 9000);
-      const anonName = `Guest_${randomId}`;
+      const anonName = `Guest_${Math.floor(1000 + Math.random() * 9000)}`;
       const anonEmail = `${anonName.toLowerCase()}@anon.local`;
 
-      const { error } = await supabaseClient
-        .from('profiles')
-        .upsert({ username: anonName, phone: anonEmail }, { onConflict: 'username' });
-
-      if (error) {
-        alert("Ошибка анонимного входа: " + error.message);
-        return;
-      }
-
+      await supabaseClient.from('profiles').upsert({ username: anonName, phone: anonEmail }, { onConflict: 'username' });
       localStorage.setItem('chat_user', anonName);
       localStorage.setItem('chat_email', anonEmail);
       localStorage.setItem('chat_is_anon', 'true');
       localStorage.setItem('chat_anon_time', Date.now().toString());
 
       initApp(anonName, anonEmail);
-      startAnonTimer(15 * 60 * 1000);
     }
 
     function startAnonTimer(duration) {
       if (anonTimer) clearTimeout(anonTimer);
-      anonTimer = setTimeout(() => {
-        alert("Время анонимной сессии (15 минут) истекло!");
-        logout();
-      }, duration);
+      anonTimer = setTimeout(() => { alert("Сессия завершена!"); logout(); }, duration);
     }
 
     function initApp(name, email) {
@@ -394,9 +370,7 @@
       document.getElementById('welcomeEmail').innerText = email;
       
       const savedAvatar = localStorage.getItem('chat_avatar_' + name);
-      if (savedAvatar) {
-        document.getElementById('userAvatar').src = savedAvatar;
-      }
+      if (savedAvatar) document.getElementById('userAvatar').src = savedAvatar;
 
       document.getElementById('authScreen').classList.remove('active');
       document.getElementById('mainNav').classList.add('active');
@@ -406,41 +380,32 @@
     }
 
     function logout() {
-      localStorage.removeItem('chat_user');
-      localStorage.removeItem('chat_email');
-      localStorage.removeItem('chat_is_anon');
-      localStorage.removeItem('chat_anon_time');
+      localStorage.clear();
       location.reload();
     }
 
     function switchMainTab(screenId, btn) {
-      document.querySelectorAll('.screen').forEach(s => {
-        if(s.id !== 'chatRoomScreen') s.classList.remove('active');
-      });
+      document.querySelectorAll('.screen').forEach(s => { if(s.id !== 'chatRoomScreen') s.classList.remove('active'); });
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
       if (btn) btn.classList.add('active');
-      if (screenId === 'chatsScreen') {
-        loadUserChats();
-      }
+      if (screenId === 'chatsScreen') loadUserChats();
     }
 
     function changeAvatar(event) {
       const file = event.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = function(e) {
-        const base64Image = e.target.result;
-        document.getElementById('userAvatar').src = base64Image;
-        localStorage.setItem('chat_avatar_' + currentUser, base64Image);
+        document.getElementById('userAvatar').src = e.target.result;
+        localStorage.setItem('chat_avatar_' + currentUser, e.target.result);
       };
       reader.readAsDataURL(file);
     }
 
     function buySubscription() {
       localStorage.setItem('chat_pro_' + currentUser, 'true');
-      alert(translations[currentLang].subSuccess);
+      alert("PRO активирован!");
       updateProfileUI();
     }
 
@@ -449,36 +414,83 @@
     }
 
     function updateProfileUI() {
-      const t = translations[currentLang];
       const subTextEl = document.getElementById('subStatusText');
       const buyBtnEl = document.querySelector('.premium-btn');
-      const subCard = document.getElementById('subscriptionCard');
-      const proDescEl = document.getElementById('proDescription');
       
       if (isOwner(currentUser)) {
-        subTextEl.innerText = t.subOwner;
-        subTextEl.style.color = "#c0392b";
-        subTextEl.style.fontWeight = "bold";
-        subCard.style.background = "#fdedec";
-        subCard.style.borderColor = "#e74c3c";
-        if(proDescEl) proDescEl.style.display = 'none';
+        subTextEl.innerText = "Статус: 👑 Владелец";
         if(buyBtnEl) buyBtnEl.style.display = 'none';
       } else if (isUserPro(currentUser)) {
-        subTextEl.innerText = t.subActive;
-        subTextEl.style.color = "#d4ac0d";
-        subTextEl.style.fontWeight = "bold";
-        if(proDescEl) proDescEl.style.display = 'none';
+        subTextEl.innerText = "Статус: 🏆 PRO Активен";
         if(buyBtnEl) buyBtnEl.style.display = 'none';
       } else {
-        subTextEl.innerText = t.subNormal;
-        subTextEl.style.color = "#333";
-        subTextEl.style.fontWeight = "normal";
-        if(proDescEl) proDescEl.style.display = 'block';
+        subTextEl.innerText = "Статус: Обычный";
         if(buyBtnEl) buyBtnEl.style.display = 'block';
       }
     }
 
-    // --- ЛОГИКА NFT ПОДАРКОВ ---
+    // --- СТИКЕРЫ (Эмодзи и Картинки) ---
+    function toggleStickerPanel() {
+      const panel = document.getElementById('stickerPanel');
+      panel.style.display = panel.style.display === 'grid' ? 'none' : 'grid';
+    }
+
+    async function sendSticker(stickerEmoji) {
+      toggleStickerPanel();
+      if (!activeChatUser) return;
+
+      await supabaseClient.from('messages').insert([{
+        sender: currentUser,
+        recipient: activeChatUser,
+        text: stickerEmoji,
+        is_sticker: true,
+        reply_to: replyingToText,
+        read: false,
+        reaction: null
+      }]);
+
+      cancelReply();
+      loadMessages();
+    }
+
+    async function sendImageSticker(event) {
+      const file = event.target.files[0];
+      if (!file || !activeChatUser) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const base64Image = e.target.result;
+
+        await supabaseClient.from('messages').insert([{
+          sender: currentUser,
+          recipient: activeChatUser,
+          text: base64Image,
+          is_sticker: true,
+          reply_to: replyingToText,
+          read: false,
+          reaction: null
+        }]);
+
+        cancelReply();
+        loadMessages();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // --- ОТВЕТЫ НА СООБЩЕНИЯ (REPLY) ---
+    function setReplyTo(msgText) {
+      replyingToText = msgText.startsWith('data:image') ? '[Картинка-стикер]' : msgText;
+      document.getElementById('replyingTextPreview').innerText = replyingToText;
+      document.getElementById('replyingBar').style.display = 'flex';
+      document.getElementById('messageInput').focus();
+    }
+
+    function cancelReply() {
+      replyingToText = null;
+      document.getElementById('replyingBar').style.display = 'none';
+    }
+
+    // --- NFT ПОДАРКИ ---
     function getMyNfts() {
       const nfts = localStorage.getItem('chat_nfts_' + currentUser);
       return nfts ? JSON.parse(nfts) : [];
@@ -486,17 +498,11 @@
 
     function mintNftGift() {
       const type = document.getElementById('nftTypeSelect').value;
-      const serialNum = Math.floor(100 + Math.random() * 900);
-      const newNft = {
-        id: 'nft_' + Date.now(),
-        name: type,
-        serial: `#${serialNum}`
-      };
-
+      const newNft = { id: 'nft_' + Date.now(), name: type, serial: `#${Math.floor(100 + Math.random() * 900)}` };
       const myNfts = getMyNfts();
       myNfts.push(newNft);
       localStorage.setItem('chat_nfts_' + currentUser, JSON.stringify(myNfts));
-      alert(`Успешно! Вы создали NFT подарок: ${newNft.name} (${newNft.serial})`);
+      alert(`Создан NFT: ${newNft.name} (${newNft.serial})`);
     }
 
     function openGiftModal() {
@@ -505,67 +511,39 @@
       const container = document.getElementById('myNftListContainer');
 
       if (myNfts.length === 0) {
-        container.innerHTML = `<p style="color: #666; text-align: center; font-size: 13px;">У вас нет созданных NFT подарков. Перейдите в Профиль и создайте их!</p>`;
+        container.innerHTML = `<p style="color: #666; text-align: center;">У вас нет NFT подарков.</p>`;
       } else {
         let html = '';
         myNfts.forEach(nft => {
           html += `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #f9f0fc; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #d2b4de;">
-              <div>
-                <b style="font-size: 14px; color: #6c3483;">${nft.name}</b>
-                <div style="font-size: 11px; color: #7f8c8d;">${nft.serial}</div>
-              </div>
-              <button onclick="sendNftGift('${nft.id}', '${nft.name}', '${nft.serial}')" style="width: auto; padding: 6px 12px; margin: 0; background: #8e44ad; font-size: 12px;">Подарить</button>
-            </div>
-          `;
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #f9f0fc; padding: 8px; border-radius: 6px; margin-bottom: 6px;">
+              <div><b>${nft.name}</b><div style="font-size: 11px; color: #7f8c8d;">${nft.serial}</div></div>
+              <button onclick="sendNftGift('${nft.id}', '${nft.name}', '${nft.serial}')" style="width: auto; padding: 6px 12px; background: #8e44ad;">Подарить</button>
+            </div>`;
         });
         container.innerHTML = html;
       }
       document.getElementById('giftModal').style.display = 'flex';
     }
 
-    function closeGiftModal() {
-      document.getElementById('giftModal').style.display = 'none';
-    }
+    function closeGiftModal() { document.getElementById('giftModal').style.display = 'none'; }
 
     async function sendNftGift(nftId, nftName, nftSerial) {
-      // Удаляем подарок из инвентаря отправителя
-      let myNfts = getMyNfts();
-      myNfts = myNfts.filter(n => n.id !== nftId);
+      let myNfts = getMyNfts().filter(n => n.id !== nftId);
       localStorage.setItem('chat_nfts_' + currentUser, JSON.stringify(myNfts));
-
       closeGiftModal();
 
-      // Отправляем специальное сообщение-подарок через Supabase
       const giftJsonString = JSON.stringify({ isNft: true, name: nftName, serial: nftSerial });
-      const { error } = await supabaseClient
-        .from('messages')
-        .insert([{ sender: currentUser, recipient: activeChatUser, text: giftJsonString, read: false, reaction: null }]);
-
-      if (error) {
-        alert("Ошибка отправки подарка: " + error.message);
-        return;
-      }
-
+      await supabaseClient.from('messages').insert([{ sender: currentUser, recipient: activeChatUser, text: giftJsonString, read: false }]);
       loadMessages();
     }
 
     async function startNewChat() {
       const target = document.getElementById('targetUser').value.trim();
-      const t = translations[currentLang];
-      if (!target) { alert(t.alertNoTarget); return; }
-      if (target === currentUser) { alert(t.alertSelf); return; }
+      if (!target || target === currentUser) return;
 
-      const { data, error } = await supabaseClient
-        .from('profiles')
-        .select('username')
-        .eq('username', target)
-        .single();
-
-      if (error || !data) {
-        alert(t.alertUserNotFound);
-        return;
-      }
+      const { data } = await supabaseClient.from('profiles').select('username').eq('username', target).single();
+      if (!data) { alert("Пользователь не найден!"); return; }
 
       document.getElementById('targetUser').value = '';
       openChatRoom(target);
@@ -573,18 +551,9 @@
 
     async function loadUserChats() {
       const container = document.getElementById('chatsListContainer');
-      const t = translations[currentLang];
+      const { data } = await supabaseClient.from('messages').select('*').or(`sender.eq.${currentUser},recipient.eq.${currentUser}`).order('created_at', { ascending: false });
 
-      const { data, error } = await supabaseClient
-        .from('messages')
-        .select('*')
-        .or(`sender.eq.${currentUser},recipient.eq.${currentUser}`)
-        .order('created_at', { ascending: false });
-
-      if (error || !data || data.length === 0) {
-        container.innerHTML = `<div style="color: #888; text-align: center; padding: 20px;">${t.noChats}</div>`;
-        return;
-      }
+      if (!data || data.length === 0) { container.innerHTML = `<div style="text-align: center; color: #888; padding: 20px;">Список чатов пуст</div>`; return; }
 
       const interlocutors = new Set();
       data.forEach(msg => {
@@ -592,48 +561,22 @@
         if (msg.recipient === currentUser) interlocutors.add(msg.sender);
       });
 
-      if (interlocutors.size === 0) {
-        container.innerHTML = `<div style="color: #888; text-align: center; padding: 20px;">${t.noChats}</div>`;
-        return;
-      }
-
       let html = '';
       interlocutors.forEach(username => {
-        let nameClass = '';
-        let badge = '';
-
-        if (isOwner(username)) {
-          nameClass = 'owner-text';
-          badge = '<span class="owner-badge">👑 ВЛАДЕЛЕЦ</span>';
-        } else if (isUserPro(username)) {
-          nameClass = 'pro-text';
-          badge = '<span class="pro-badge">🏆 PRO</span>';
-        }
-        
-        html += `
-          <div class="chat-item" onclick="openChatRoom('${username}')">
-            <div>
-              <div class="chat-item-name ${nameClass}">@${username} ${badge}</div>
-            </div>
-          </div>
-        `;
+        let badge = isOwner(username) ? '<span class="owner-badge">👑 ВЛАДЕЛЕЦ</span>' : (isUserPro(username) ? '<span class="pro-badge">🏆 PRO</span>' : '');
+        html += `<div class="chat-item" onclick="openChatRoom('${username}')"><div class="chat-item-name">@${username} ${badge}</div></div>`;
       });
       container.innerHTML = html;
     }
 
     async function openChatRoom(username) {
       activeChatUser = username;
-      let badge = '';
-      if (isOwner(username)) badge = ' <span class="owner-badge">👑 ВЛАДЕЛЕЦ</span>';
-      else if (isUserPro(username)) badge = ' <span class="pro-badge">🏆 PRO</span>';
-
-      document.getElementById('chatWithTitle').innerHTML = '@' + username + badge;
-      
+      document.getElementById('chatWithTitle').innerHTML = '@' + username;
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById('mainNav').classList.remove('active');
       document.getElementById('chatRoomScreen').classList.add('active');
 
-      markMessagesAsRead();
+      cancelReply();
       loadMessages();
       if (messageInterval) clearInterval(messageInterval);
       messageInterval = setInterval(loadMessages, 3000);
@@ -651,102 +594,76 @@
       const text = document.getElementById('messageInput').value.trim();
       if (!activeChatUser || !text) return;
 
-      const { error } = await supabaseClient
-        .from('messages')
-        .insert([{ sender: currentUser, recipient: activeChatUser, text: text, read: false, reaction: null }]);
-
-      if (error) {
-        alert("Ошибка отправки: " + error.message);
-        return;
-      }
+      await supabaseClient.from('messages').insert([{
+        sender: currentUser,
+        recipient: activeChatUser,
+        text: text,
+        is_sticker: false,
+        reply_to: replyingToText,
+        read: false,
+        reaction: null
+      }]);
 
       document.getElementById('messageInput').value = '';
+      cancelReply();
       loadMessages();
     }
 
     async function handleMessageDblClick(msgId, currentReaction) {
       const newReaction = currentReaction === '❤️' ? null : '❤️';
-      
-      const { error } = await supabaseClient
-        .from('messages')
-        .update({ reaction: newReaction })
-        .eq('id', msgId);
-
-      if (!error) {
-        loadMessages();
-      }
-    }
-
-    async function markMessagesAsRead() {
-      await supabaseClient
-        .from('messages')
-        .update({ read: true })
-        .eq('sender', activeChatUser)
-        .eq('recipient', currentUser);
+      await supabaseClient.from('messages').update({ reaction: newReaction }).eq('id', msgId);
+      loadMessages();
     }
 
     async function loadMessages() {
       if (!activeChatUser) return;
-
-      const { data, error } = await supabaseClient
-        .from('messages')
-        .select('*')
-        .or(`and(sender.eq.${currentUser},recipient.eq.${activeChatUser}),and(sender.eq.${activeChatUser},recipient.eq.${currentUser})`)
-        .order('created_at', { ascending: true });
+      const { data } = await supabaseClient.from('messages').select('*').or(`and(sender.eq.${currentUser},recipient.eq.${activeChatUser}),and(sender.eq.${activeChatUser},recipient.eq.${currentUser})`).order('created_at', { ascending: true });
 
       const messagesDiv = document.getElementById('messagesList');
-      if (error || !data || data.length === 0) {
-        messagesDiv.innerHTML = `<div style="text-align: center; color: #888; margin-top: auto; margin-bottom: auto;">${translations[currentLang].noMessages}</div>`;
+      if (!data || data.length === 0) {
+        messagesDiv.innerHTML = `<div style="text-align: center; color: #888; margin: auto;">Сообщений пока нет</div>`;
         return;
       }
-
-      markMessagesAsRead();
 
       let html = '';
       data.forEach(msg => {
         const isMy = msg.sender === currentUser;
         const bubbleClass = isMy ? 'msg-outgoing' : 'msg-incoming';
-        
-        let timeStr = "";
-        if (msg.created_at) {
-          const date = new Date(msg.created_at);
-          timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
+        const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
-        let infoHtml = '';
-        if (isMy) {
-          const checkmarks = msg.read ? '✓✓' : '✓';
-          infoHtml = `<div class="msg-info"><span>${timeStr}</span> <span style="font-weight: bold; color: ${msg.read ? '#fff' : 'rgba(255,255,255,0.7)'};">${checkmarks}</span></div>`;
-        } else {
-          infoHtml = `<div class="msg-info"><span>${timeStr}</span></div>`;
-        }
+        let replyHtml = msg.reply_to ? `<div class="reply-quote">↩ ${msg.reply_to}</div>` : '';
 
-        let reactionHtml = '';
-        if (msg.reaction) {
-          reactionHtml = `<div class="msg-reaction">${msg.reaction}</div>`;
-        }
-
-        // Проверяем, является ли текст сообщения NFT-подарком
         let contentHtml = '';
-        try {
-          const parsed = JSON.parse(msg.text);
-          if (parsed && parsed.isNft) {
-            contentHtml = `
-              <div><b>@${msg.sender}</b> дарит NFT:</div>
-              <div class="nft-gift-box">
-                <div class="nft-gift-title">🎁 ${parsed.name}</div>
-                <div class="nft-gift-serial">Уникальный ID: ${parsed.serial}</div>
-              </div>
-            `;
+        if (msg.is_sticker) {
+          if (msg.text.startsWith('data:image')) {
+            contentHtml = `<img src="${msg.text}" style="max-width: 120px; max-height: 120px; border-radius: 8px; display: block;">`;
           } else {
+            contentHtml = `<div class="msg-sticker">${msg.text}</div>`;
+          }
+        } else {
+          try {
+            const parsed = JSON.parse(msg.text);
+            if (parsed && parsed.isNft) {
+              contentHtml = `
+                <div><b>@${msg.sender}</b> дарит NFT:</div>
+                <div class="nft-gift-box">
+                  <div class="nft-gift-title">🎁 ${parsed.name}</div>
+                  <div class="nft-gift-serial">ID: ${parsed.serial}</div>
+                </div>`;
+            } else {
+              contentHtml = `<div><b>@${msg.sender}:</b> ${msg.text}</div>`;
+            }
+          } catch (e) {
             contentHtml = `<div><b>@${msg.sender}:</b> ${msg.text}</div>`;
           }
-        } catch (e) {
-          contentHtml = `<div><b>@${msg.sender}:</b> ${msg.text}</div>`;
         }
 
+        const infoHtml = isMy ? `<div class="msg-info"><span>${timeStr}</span> <b>${msg.read ? '✓✓' : '✓'}</b></div>` : `<div class="msg-info"><span>${timeStr}</span></div>`;
+        const reactionHtml = msg.reaction ? `<div class="msg-reaction">${msg.reaction}</div>` : '';
+
         html += `
-          <div class="msg-bubble ${bubbleClass}" ondblclick="handleMessageDblClick(${msg.id}, '${msg.reaction || ''}')">
+          <div class="msg-bubble ${bubbleClass}" onclick="setReplyTo('${msg.is_sticker && msg.text.startsWith('data:image') ? '[Картинка]' : msg.text.replace(/'/g, "\\'")}')" ondblclick="handleMessageDblClick(${msg.id}, '${msg.reaction || ''}')">
+            ${replyHtml}
             ${contentHtml}
             ${infoHtml}
             ${reactionHtml}
