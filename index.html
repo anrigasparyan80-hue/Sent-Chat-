@@ -652,35 +652,37 @@ window.addEventListener('load', () => {
 
 <button id="fab-menu-btn" class="fab-btn">+</button>
 
-<div id="action-modal" class="modal-overlay">
-    <div class="modal-content">
-        <h3 style="margin-top:0;">Новое действие</h3>
-        <button id="create-chat-option" class="modal-btn btn-chat">Личный чат</button>
-        <button id="create-group-option" class="modal-btn btn-group">Создать группу</button>
-        <br>
-        <button id="close-modal-btn" class="modal-close">Отмена</button>
-    </div>
-</div>
-
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const fabBtn = document.getElementById("fab-menu-btn");
     const modal = document.getElementById("action-modal");
     const closeModalBtn = document.getElementById("close-modal-btn");
     const chatBtn = document.getElementById("create-chat-option");
     const groupBtn = document.getElementById("create-group-option");
 
-    if (chatBtn) {
-        chatBtn.textContent = "Личный чат";
+    // Ищем кнопку с плюсом по любому возможному признаку
+    const fabBtn = document.getElementById("fab-menu-btn") || 
+                   document.querySelector(".fab-btn") || 
+                   Array.from(document.querySelectorAll("button, div")).find(el => el.textContent.trim() === "+");
+
+    if (fabBtn && modal) {
+        fabBtn.addEventListener("click", () => {
+            modal.style.display = "flex";
+        });
     }
 
-    fabBtn.addEventListener("click", () => modal.style.display = "flex");
-    closeModalBtn.addEventListener("click", () => modal.style.display = "none");
-    modal.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
+    if (closeModalBtn && modal) {
+        closeModalBtn.addEventListener("click", () => {
+            modal.style.display = "none";
+        });
+    }
 
-    // Универсальная функция для добавления чата или группы в список
+    if (modal) {
+        modal.addEventListener("click", (e) => { 
+            if (e.target === modal) modal.style.display = "none"; 
+        });
+    }
+
+    // Универсальная функция добавления чата/группы в список
     function addNewDialog(name, type) {
         if (!name || name.trim() === "") return;
 
@@ -705,24 +707,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Создание личного чата
-    chatBtn.addEventListener("click", () => {
-        modal.style.display = "none";
-        let username = prompt("Введите название новой группы :");
-        if (username) {
-            addNewDialog(username, "chat");
-        }
-    });
+    if (chatBtn) {
+        chatBtn.addEventListener("click", () => {
+            modal.style.display = "none";
+            let username = prompt("Введите ник собеседника:");
+            if (username) {
+                addNewDialog(username, "chat");
+            }
+        });
+    }
 
     // Создание группы
-    groupBtn.addEventListener("click", () => {
-        modal.style.display = "none";
-        let groupName = prompt("Введите название новой группы:");
-        if (groupName) {
-            addNewDialog(groupName, "group");
-        }
-    });
+    if (groupBtn) {
+        groupBtn.addEventListener("click", () => {
+            modal.style.display = "none";
+            let groupName = prompt("Введите название новой группы:");
+            if (groupName) {
+                addNewDialog(groupName, "group");
+            }
+        });
+    }
 });
 </script>
+ 
 
 
 </body>
