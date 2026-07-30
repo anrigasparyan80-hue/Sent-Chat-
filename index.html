@@ -599,3 +599,85 @@ window.addEventListener('load', () => {
   </script>
 </body>
 </html>
+<!-- Настройки профиля -->
+<div id="user-profile-card" class="profile-card">
+    <h3>Профиль Sent Chat</h3>
+    <div class="profile-field">
+        <label>Юзернейм:</label>
+        <input type="text" id="username-input" placeholder="@username">
+    </div>
+    <div class="profile-field">
+        <label>Дата рождения:</label>
+        <input type="date" id="birthdate-input">
+    </div>
+    <button id="save-profile-btn">Сохранить</button>
+</div>
+
+<style>
+.profile-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 15px;
+    border-radius: 12px;
+    max-width: 300px;
+    margin: 15px auto;
+    font-family: sans-serif;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+.profile-card h3 {
+    margin-top: 0;
+    font-size: 16px;
+    color: #1a365d;
+    text-align: center;
+}
+.profile-field {
+    margin-bottom: 10px;
+}
+.profile-field label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+.profile-field input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+#save-profile-btn {
+    width: 100%;
+    background: #1a365d;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+#save-profile-btn:hover {
+    background: #2563eb;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const usernameInput = document.getElementById("username-input");
+    const birthdateInput = document.getElementById("birthdate-input");
+    const saveBtn = document.getElementById("save-profile-btn");
+
+    if (localStorage.getItem("sent_chat_username")) {
+        usernameInput.value = localStorage.getItem("sent_chat_username");
+    }
+    if (localStorage.getItem("sent_chat_birthdate")) {
+        birthdateInput.value = localStorage.getItem("sent_chat_birthdate");
+    }
+
+    saveBtn.addEventListener("click", () => {
+        localStorage.setItem("sent_chat_username", usernameInput.value);
+        localStorage.setItem("sent_chat_birthdate", birthdateInput.value);
+        alert("Профиль успешно сохранен!");
+    });
+});
+</script>
