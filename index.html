@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sent Chat</title>
+  
+  <!-- Подключаем SDK Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #0f1721; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Экран входа */
+    #auth-screen { position: fixed; inset: 0; background: #0f1721; display: flex; flex-direction: column; justify-content: center; padding: 25px; z-index: 100; }
+    #auth-screen h2 { margin-bottom: 20px; text-align: center; color: #5288c1; font-size: 26px; }
+    .input-group { margin-bottom: 12px; }
+    input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #242f3d; background: #17212b; color: #fff; outline: none; font-size: 15px; }
+    .btn { width: 100%; padding: 12px; border-radius: 10px; border: none; background: #2b5278; color: #fff; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 5px; }
+    
+    /* Шапка приложения */
+    header { background-color: #17212b; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #0e1621; }
+    .user-info h3 { font-size: 16px; color: #fff; }
+    .user-info p { font-size: 12px; color: #5288c1; display: flex; align-items: center; gap: 5px; }
+
+    /* Индикатор онлайн */
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background-color: #7f91a4; }
+    .status-dot.online { background-color: #4caf50; box-shadow: 0 0 5px #4caf50; }
+
+    /* Выбор собеседника */
+    #search-bar { background: #182533; padding: 8px 12px; display: flex; gap: 8px; }
+    #search-bar input { flex: 1; padding: 8px; font-size: 14px; }
+    #search-bar button { padding: 8px 12px; background: #2b5278; border: none; border-radius: 8px; color: white; font-weight: bold; }
+
+    /* Область сообщений */
+    #chat-box { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #0e1621; }
+    .msg { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
+    .msg.my { align-self: flex-end; background-color: #2b5278; }
+    .msg.peer { align-self: flex-start; background-color: #182533; }
+    .msg .time { font-size: 10px; color: #7f91a4; text-align: right; margin-top: 3px; }
+    .msg img { max-width: 100%; border-radius: 8px; margin-top: 5px; display: block; }
+    .msg a { color: #64b5f6; text-decoration: underline; font-weight: bold; }
+
+    /* Панель ввода */
+    footer { background-color: #17212b; padding: 8px 12px; display: flex; gap: 8px; align-items: center; }
+    .file-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #6c7883; padding: 0 4px; }
+    #message-input { flex: 1; border-radius: 20px; }
+    #send-btn { background: none; border: none; color: #5288c1; font-weight: bold; font-size: 15px; cursor: pointer; }
+    #file-input { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Экран Регистрации / Входа -->
+  <div id="auth-screen">
+    <h2>💬 Sent Chat</h2>
+    <div class="input-group">
+      <input type="text" id="username" placeholder="Ваш никнейм...">
+    </div>
+    <div class="input-group">
+      <input type="password" id="password" placeholder="Пароль...">
+    </div>
+    <button class="btn" type="button" id="auth-btn">Войти / Зарегистрироваться</button>
+  </div>
+
+  <!-- Главное окно чата -->
+  <header>
+    <div class="user-info">
+      <h3 id="current-user-title">Sent Chat</h3>
+      <p id="chat-with-title">
+        <span id="status-dot" class="status-dot"></span>
+        <span id="status-text">Выберите собеседника</span>
+      </p>
+    </div>
+    <button style="background:none; border:none; color:#e53935; font-weight:bold; cursor:pointer;" onclick="location.reload()">Выйти</button>
+  </header>
+
+  <div id="search-bar">
+    <input type="text" id="peer-username" placeholder="Никнейм собеседника...">
+    <button type="button" id="start-chat-btn">Чат</button>
+  </div>
+
+  <div id="chat-box"></div>
+
+  <footer>
+    <label for="file-input" class="file-btn">📎</label>
+    <input type="file" id="file-input">
+    <input type="text" id="message-input" placeholder="Сообщение...">
+    <button type="button" id="send-btn">Отправить</button>
+  </footer>
+
+  <script>
+    window.onerror = function(msg, url, line) {
+      alert("Ошибка в коде: " + msg + "\nСтрока: " + line);
+      return false;
+    };
+
+    // ВСТАВЬТЕ ВАШИ ДАННЫЕ ИЗ FIREBASE НИЖЕ:
+    const firebaseConfig = {
+      apiKey: "ВАШ_API_KEY",
+      authDomain: "ВАШ_PROJECT.firebaseapp.com",
+      databaseURL: "https://ВАШ_PROJECT-default-rtdb.firebaseio.com",
+      projectId: "ВАШ_PROJECT",
+      storageBucket: "ВАШ_PROJECT.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:abcdef"
+    };
+
+    let db = null;
+
+    try {
+      if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "ВАШ_API_KEY") {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+      }
+    } catch(e) {
+      alert("Ошибка подключения к Firebase: " + e.message);
+    }
+
+    let currentUser = null;
+    let targetUser = null;
+    let activeChatRef = null;
+    let statusListenerRef = null;
+
+    document.getElementById('auth-btn').onclick = handleAuth;
+    document.getElementById('start-chat-btn').onclick = startChat;
+    document.getElementById('send-btn').onclick = sendMessage;
+    document.getElementById('file-input').onchange = function() { sendFile(this); };
+    
+    document.getElementById('message-input').onkeypress = function(e) {
+      if (e.key === 'Enter') sendMessage();
+    };
+
+    function handleAuth() {
+      const user = document.getElementById('username').value.trim().toLowerCase();
+      const pass = document.getElementById('password').value.trim();
+
+      if (!user || !pass) return alert('Заполните логин и пароль!');
+
+      if (!db) {
+        alert('Внимание: Firebase не настроен. Входим в демо-режиме!');
+        loginSuccess(user);
+        return;
+      }
+
+      const userRef = db.ref('users/' + user);
+      userRef.once('value', (snapshot) => {
+        if (snapshot.exists()) {
+          if (snapshot.val().password === pass) {
+            loginSuccess(user);
+          } else {
+            alert('Неверный пароль!');
+          }
+        } else {
+          userRef.set({ password: pass }, (err) => {
+            if (err) {
+              alert("Ошибка сохранения: " + err.message);
+            } else {
+              alert('Успешная регистрация!');
+              loginSuccess(user);
+            }
+          });
+        }
+      });
+    }
+
+    function loginSuccess(user) {
+      currentUser = user;
+      document.getElementById('current-user-title').innerText = 'Sent Chat | @' + user;
+      document.getElementById('auth-screen').style.display = 'none';
+
+      // Включаем отслеживание собственного онлайн-статуса
+      if (db) {
+        setupMyPresence(user);
+      }
+    }
+
+    // Система отслеживания своего присутствия
+    function setupMyPresence(user) {
+      const myStatusRef = db.ref('status/' + user);
+      const connectedRef = db.ref('.info/connected');
+
+      connectedRef.on('value', (snap) => {
+        if (snap.val() === true) {
+          // При авто-отключении (закрытии приложения) Firebase поставит offline
+          myStatusRef.onDisconnect().set({
+            state: 'offline',
+            lastSeen: firebase.database.ServerValue.TIMESTAMP
+          });
+
+          // Ставим статус online прямо сейчас
+          myStatusRef.set({
+            state: 'online',
+            lastSeen: firebase.database.ServerValue.TIMESTAMP
+          });
+        }
+      });
+    }
+
+    function startChat() {
+      const target = document.getElementById('peer-username').value.trim().toLowerCase();
+      if (!target || target === currentUser) return alert('Укажите никнейм другого пользователя!');
+
+      targetUser = target;
+      document.getElementById('chat-box').innerHTML = '';
+
+      if (!db) {
+        document.getElementById('status-text').innerText = 'Чат с @' + targetUser + ' (Демо)';
+        return;
+      }
+
+      // Отслеживаем онлайн-статус собеседника в реальном времени
+      if (statusListenerRef) statusListenerRef.off();
+
+      statusListenerRef = db.ref('status/' + targetUser);
+      statusListenerRef.on('value', (snap) => {
+        const val = snap.val();
+        const dot = document.getElementById('status-dot');
+        const text = document.getElementById('status-text');
+
+        if (val && val.state === 'online') {
+          dot.className = 'status-dot online';
+          text.innerText = '@' + targetUser + ' в сети';
+        } else if (val && val.lastSeen) {
+          dot.className = 'status-dot';
+          const timeStr = new Date(val.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          text.innerText = '@' + targetUser + ' был(а) в ' + timeStr;
+        } else {
+          dot.className = 'status-dot';
+          text.innerText = '@' + targetUser + ' не в сети';
+        }
+      });
+
+      const chatId = [currentUser, targetUser].sort().join('_');
+      if (activeChatRef) activeChatRef.off();
+
+      activeChatRef = db.ref('chats/' + chatId);
+      activeChatRef.on('child_added', (snapshot) => {
+        renderMessage(snapshot.val());
+      });
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('message-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const msgObj = { type: 'text', sender: currentUser, text: text, time: time };
+
+      if (!db) {
+        renderMessage(msgObj);
+        input.value = '';
+        return;
+      }
+
+      if (!activeChatRef) return alert('Сначала откройте чат с пользователем!');
+
+      activeChatRef.push(msgObj);
+      input.value = '';
+    }
+
+    function sendFile(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      if (file.size > 5 * 1024 * 1024) return alert('Файл больше 5 МБ!');
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const msgObj = {
+          type: 'file',
+          sender: currentUser,
+          fileName: file.name,
+          fileType: file.type,
+          fileData: e.target.result,
+          time: time
+        };
+
+        if (!db) {
+          renderMessage(msgObj);
+        } else if (activeChatRef) {
+          activeChatRef.push(msgObj);
+        } else {
+          alert('Сначала открывайте чат с пользователем!');
+        }
+      };
+
+      reader.readAsDataURL(file);
+      input.value = '';
+    }
+
+    function renderMessage(msg) {
+      const chatBox = document.getElementById('chat-box');
+      const div = document.createElement('div');
+      div.className = `msg ${msg.sender === currentUser ? 'my' : 'peer'}`;
+
+      let contentHtml = '';
+      if (msg.type === 'text') {
+        contentHtml = `<div>${msg.text}</div>`;
+      } else if (msg.type === 'file') {
+        if (msg.fileType && msg.fileType.startsWith('image/')) {
+          contentHtml = `<img src="${msg.fileData}" alt="Картинка">`;
+        } else {
+          contentHtml = `<a href="${msg.fileData}" download="${msg.fileName}">📄 ${msg.fileName}</a>`;
+        }
+      }
+
+      div.innerHTML = `${contentHtml}<div class="time">${msg.time}</div>`;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+</body>
+</html>
