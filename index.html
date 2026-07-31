@@ -49,7 +49,6 @@
     .msg-info { font-size: 11px; display: flex; justify-content: flex-end; gap: 4px; margin-top: 4px; opacity: 0.8; }
     
     .msg-reaction { position: absolute; bottom: -10px; right: 10px; background: #1e293b; border: 1px solid #334155; color: #fff; border-radius: 12px; padding: 2px 6px; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-
     .msg-sticker { background: transparent !important; border: none !important; box-shadow: none !important; font-size: 48px; padding: 0; text-align: center; }
 
     .reply-quote { background: rgba(255,255,255,0.08); border-left: 3px solid #60a5fa; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-bottom: 6px; opacity: 0.9; }
@@ -66,17 +65,13 @@
     .nft-gift-serial { font-size: 12px; opacity: 0.9; margin-top: 2px; }
 
     .owner-badge { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; display: inline-block; vertical-align: middle; }
-    .owner-text { color: #ef4444 !important; font-weight: bold; }
-
     .pro-badge { background: #eab308; color: #000; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; display: inline-block; vertical-align: middle; }
-    .pro-text { color: #eab308 !important; font-weight: bold; }
   </style>
 </head>
 <body>
 
-  <!-- СПЛЕШ-СКРИН -->
   <div id="splash-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease;">
-      <img src="GigaChat.jpg" alt="Sent Chat Logo" style="width: 200px; max-width: 80%; height: auto; margin-bottom: 25px;">
+      <img src="GigaChat.jpg" alt="Logo" style="width: 200px; max-width: 80%; height: auto; margin-bottom: 25px;">
       <div style="width: 35px; height: 35px; border: 3px solid rgba(255, 255, 255, 0.1); border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
   </div>
 
@@ -130,13 +125,11 @@
     
     <div id="messagesList" class="messages-container" data-i18n="noMessages">Сообщений пока нет</div>
     
-    <!-- Панель ответа на сообщение (Reply) -->
     <div id="replyingBar">
       <div>↩ Ответ на: <span id="replyingTextPreview" style="font-weight: bold;"></span></div>
       <button onclick="cancelReply()" style="background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer; width: auto; padding: 0; margin: 0;">✕</button>
     </div>
 
-    <!-- Панель выбора стикеров (эмодзи) -->
     <div id="stickerPanel">
       <div class="sticker-item" onclick="sendSticker('🔥')">🔥</div>
       <div class="sticker-item" onclick="sendSticker('😎')">😎</div>
@@ -150,11 +143,9 @@
       <div class="sticker-item" onclick="sendSticker('🍕')">🍕</div>
     </div>
 
-    <!-- Панель ввода сообщения + кнопки управления -->
     <div style="display: flex; gap: 5px; align-items: center;">
       <button onclick="toggleStickerPanel()" style="margin:0; width: 38px; background: #d97706;" title="Стикеры">🎨</button>
       
-      <!-- Кнопка загрузки своего стикера-картинки -->
       <input type="file" id="stickerFile" accept="image/*" style="display: none;" onchange="sendImageSticker(event)">
       <button onclick="document.getElementById('stickerFile').click()" style="margin:0; width: 38px; background: #b45309;" title="Загрузить свой стикер">🖼️</button>
 
@@ -209,7 +200,6 @@
     </div>
   </div>
 
-  <!-- НАВИГАЦИЯ -->
   <div class="nav-bar" id="mainNav">
     <button class="nav-btn active" id="navChatsBtn" onclick="switchMainTab('chatsScreen', this)" data-i18n="navChats">Чаты</button>
     <button class="nav-btn" id="navProfileBtn" onclick="switchMainTab('profileScreen', this)" data-i18n="navProfile">Профиль</button>
@@ -223,14 +213,13 @@
                 splash.style.opacity = '0';
                 setTimeout(() => splash.remove(), 500);
             }
-        }, 1800);
+        }, 1200);
 
         if (localStorage.getItem('chat_is_anon') === 'true') {
             const loginTime = parseInt(localStorage.getItem('chat_anon_time') || '0', 10);
             const elapsed = Date.now() - loginTime;
             const limit = 15 * 60 * 1000;
             if (elapsed > limit) logout();
-            else startAnonTimer(limit - elapsed);
         }
     });
 
@@ -245,8 +234,7 @@
         authTitle: "Вход в чат 🔑",
         authPlaceholder: "Введите ваш никнейм",
         emailPlaceholder: "Введите ваш Email",
-        getCodeBtn: "Получить код",
-        verifyCodeBtn: "Подтвердить и войти",
+        authBtn: "Получить код",
         chatsHeader: "Чаты 💬",
         startChatBtn: "Начать",
         recentChats: "Недавние диалоги",
@@ -267,8 +255,7 @@
         authTitle: "Chat Login 🔑",
         authPlaceholder: "Enter your nickname",
         emailPlaceholder: "Enter your Email",
-        getCodeBtn: "Get Code",
-        verifyCodeBtn: "Verify & Sign In",
+        authBtn: "Get Code",
         chatsHeader: "Chats 💬",
         startChatBtn: "Start",
         recentChats: "Recent Chats",
@@ -317,7 +304,6 @@
     let messageInterval = null;
     let generatedSecretCode = '';
     let isCodeSent = false;
-    let anonTimer = null;
     let replyingToText = null;
 
     if (currentUser) initApp(currentUser, currentEmail);
@@ -359,11 +345,6 @@
       localStorage.setItem('chat_anon_time', Date.now().toString());
 
       initApp(anonName, anonEmail);
-    }
-
-    function startAnonTimer(duration) {
-      if (anonTimer) clearTimeout(anonTimer);
-      anonTimer = setTimeout(() => { alert("Сессия завершена!"); logout(); }, duration);
     }
 
     function initApp(name, email) {
@@ -432,7 +413,6 @@
       }
     }
 
-    // --- СТИКЕРЫ (Эмодзи и Картинки) ---
     function toggleStickerPanel() {
       const panel = document.getElementById('stickerPanel');
       panel.style.display = panel.style.display === 'grid' ? 'none' : 'grid';
@@ -462,12 +442,10 @@
 
       const reader = new FileReader();
       reader.onload = async function(e) {
-        const base64Image = e.target.result;
-
         await supabaseClient.from('messages').insert([{
           sender: currentUser,
           recipient: activeChatUser,
-          text: base64Image,
+          text: e.target.result,
           is_sticker: true,
           reply_to: replyingToText,
           read: false,
@@ -480,7 +458,6 @@
       reader.readAsDataURL(file);
     }
 
-    // --- ОТВЕТЫ НА СООБЩЕНИЯ (REPLY) ---
     function setReplyTo(msgText) {
       replyingToText = msgText.startsWith('data:image') ? '[Картинка-стикер]' : msgText;
       document.getElementById('replyingTextPreview').innerText = replyingToText;
@@ -493,7 +470,6 @@
       document.getElementById('replyingBar').style.display = 'none';
     }
 
-    // --- NFT ПОДАРКИ ---
     function getMyNfts() {
       const nfts = localStorage.getItem('chat_nfts_' + currentUser);
       return nfts ? JSON.parse(nfts) : [];
@@ -546,7 +522,9 @@
       if (!target || target === currentUser) return;
 
       const { data } = await supabaseClient.from('profiles').select('username').eq('username', target).single();
-      if (!data) { alert("Пользователь не найден!"); return; }
+      if (!data) {
+        await supabaseClient.from('profiles').insert([{ username: target, phone: `${target}@chat.local` }]);
+      }
 
       document.getElementById('targetUser').value = '';
       openChatRoom(target);
@@ -594,10 +572,12 @@
     }
 
     async function sendMessage() {
-      const text = document.getElementById('messageInput').value.trim();
+      const textInput = document.getElementById('messageInput');
+      const text = textInput.value.trim();
+      
       if (!activeChatUser || !text) return;
 
-      await supabaseClient.from('messages').insert([{
+      const { error } = await supabaseClient.from('messages').insert([{
         sender: currentUser,
         recipient: activeChatUser,
         text: text,
@@ -607,7 +587,12 @@
         reaction: null
       }]);
 
-      document.getElementById('messageInput').value = '';
+      if (error) {
+        alert("Ошибка отправки: " + error.message);
+        return;
+      }
+
+      textInput.value = '';
       cancelReply();
       loadMessages();
     }
