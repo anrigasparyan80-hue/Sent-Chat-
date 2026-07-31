@@ -227,7 +227,9 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2dGhvc2hocndxc3lxaWJ4a3NsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0MTgwNjUsImV4cCI6MjEwMDk5NDA2NX0.S6cCH-Y7CfmY_WQPqwkYOMq1BOFxeQlwWWyrC398Oc8';
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const OWNER_USERNAME = 'Admin';
+    
+    // Массив владельцев системы (Admin и Boss)
+    const OWNERS = ['Admin', 'Boss'];
 
     const translations = {
       ru: {
@@ -309,7 +311,8 @@
     if (currentUser) initApp(currentUser, currentEmail);
 
     function isOwner(username) {
-      return username.toLowerCase() === OWNER_USERNAME.toLowerCase();
+      if (!username) return false;
+      return OWNERS.some(owner => owner.toLowerCase() === username.toLowerCase());
     }
 
     async function handleAuthAction() {
